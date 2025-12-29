@@ -5,197 +5,37 @@
 ## 功能特性
 
 - 📊 实时跟踪 agent 执行状态
-- 📝 记录详细的任务进度和操作历史
+- 📝 记录任务进度和状态
 - 💾 本地文件存储（支持后续扩展到数据库）
 - 🔍 查询 agent 和任务状态
 - 📈 进度百分比跟踪
-- 🏷️ 丰富的状态分类和动作类型
 
-## 数据结构设计
+## 数据模型
 
 ### 任务状态 (TaskStatus)
-- `PENDING`: 等待执行
-- `RUNNING`: 正在执行
-- `COMPLETED`: 已完成
-- `FAILED`: 执行失败
-- `CANCELLED`: 已取消
+- `running`: 正在执行
+- `success`: 执行成功
+- `failed`: 执行失败
 
-### Agent 动作类型 (AgentAction)
-- `CODE_ANALYSIS`: 代码分析
-- `CODE_WRITING`: 代码编写
-- `CODE_REVIEW`: 代码审查
-- `TESTING`: 测试执行
-- `PR_CREATION`: 创建 Pull Request
-- `PR_UPDATE`: 更新 Pull Request
-- `ERROR_HANDLING`: 错误处理
-- `WAITING_INPUT`: 等待输入
+### 数据关系
+- **Agent**: 执行任务的智能体（如 claude-coder-001）
+- **Task**: Agent 执行的具体任务（如编写某个功能）
+- 一个 Agent 可以执行多个 Task，但同时只能有一个活跃的 Task
 
-### 状态数据结构
+### 数据结构
 ```python
 @dataclass
-class AgentStatus:
-    agent_id: str              # Agent 唯一标识
+class TaskInfo:
     task_id: str               # 任务唯一标识
+    agent_id: str              # Agent 唯一标识
     status: TaskStatus         # 任务状态
-    current_action: AgentAction # 当前动作
-    progress_percentage: float  # 进度百分比 (0-100)
+    current_action: str        # 当前动作描述 (Agent 自定义)
+    progress_percentage: float # 进度百分比 (0-100)
     message: str               # 状态描述
     details: Dict[str, Any]    # 额外详情
-    timestamp: str             # 时间戳
+    created_at: str            # 创建时间
+    updated_at: str            # 更新时间
 ```
-
-## 安装和使用
-
-### 1. 安装依赖
-```bash
-pip install fastmcp
-```
-
-### 2. 运行 MCP 服务器
-```bash
-python agent_status_mcp.py
-```
-
-### 3. 配置 MCP 客户端
-在你的 MCP 配置文件中添加：
-```json
-{
-  "mcpServers": {
-    "agent-status": {
-      "command": "python",
-      "args": ["/path/to/agent_status_mcp.py"],
-      "env": {}
-    }
-  }
-}
-```
-
-## 重要：Claude Agent 如何知道可用的枚举值？
-
-在实际的 MCP 交互中，Claude agent 默认**不会自动知道**你定义的枚举值。为了解决这个问题：
-
-### 解决方案 1: 初始化会话 (推荐)
-```python
-# Agent 首次使用时调用
-session_info = await initialize_agent_session("claude-coder-001")
-# 返回所有可用的状态和动作类型，以及使用示例
-```
-
-### 解决方案 2: 查询可用状态
-```python
-# 快速获取枚举值列表
-statuses = await get_available_statuses()
-```
-
-### 解决方案 3: 查看工具文档
-`update_agent_status` 工具的文档字符串现在明确列出了所有可用值。
-
-详细使用指南请参考 [AGENT_USAGE_GUIDE.md](AGENT_USAGE_GUIDE.md)
-
-## MCP 工具 (Tools)
-
-### 0. initialize_agent_session (推荐首先调用)
-初始化 agent 会话，获取所有可用的状态和动作类型
-```python
-initialize_agent_session(agent_id="claude-coder-001")
-```
-**重要**: Claude agent 在开始使用前应该先调用此工具来了解可用的枚举值。
-
-### 1. update_agent_status
-更新 agent 状态
-```python
-update_agent_status(
-    agent_id="claude-coder-001",
-    task_id="task-20241229-143022",
-    status="running",
-    message="正在分析代码结构",
-    current_action="code_analysis",
-    progress_percentage=25.0,
-    details={
-        "files_analyzed": 5,
-        "complexity": "medium"
-    }
-)
-```
-
-### 2. get_available_statuses
-获取所有可用的状态和动作枚举值
-```python
-get_available_statuses()
-```
-
-### 3. update_agent_status
-获取 agent 当前状态和历史
-```python
-get_agent_status(agent_id="claude-coder-001")
-```
-
-### 4. get_agent_status
-获取 agent 当前状态和历史
-```python
-get_agent_status(agent_id="claude-coder-001")
-```
-
-### 5. get_task_status
-获取任务状态
-```python
-get_task_status(task_id="task-20241229-143022")
-```
-
-### 6. list_active_agents
-列出所有活跃的 agents
-```python
-list_active_agents()
-```
-
-### 7. get_storage_info
-获取存储信息和统计
-```python
-get_storage_info()
-```
-
-## 存储结构
-
-默认存储路径：`~/.task-manager/agent-sync-mcp/`
-
-```
-~/.task-manager/agent-sync-mcp/
-├── agents/          # Agent 状态文件
-│   ├── claude-coder-001.json
-│   └── claude-coder-002.json
-├── tasks/           # 任务状态文件
-│   ├── task-20241229-143022.json
-│   └── task-20241229-143045.json
-└── logs/            # 日志文件 (预留)
-```
-
-### Agent 文件格式
-```json
-{
-  "agent_id": "claude-coder-001",
-  "current_status": {
-    "agent_id": "claude-coder-001",
-    "task_id": "task-20241229-143022",
-    "status": "running",
-    "current_action": "code_writing",
-    "progress_percentage": 60.0,
-    "message": "正在编写新功能代码",
-    "details": {
-      "files_modified": ["src/main.py"],
-      "lines_added": 45
-    },
-    "timestamp": "2024-12-29T14:30:22Z"
-  },
-  "last_updated": "2024-12-29T14:30:22Z",
-  "history": [
-    // 最近100条状态历史
-  ]
-}
-```
-
-## 使用示例
-
-查看 `example_usage.py` 文件，了解如何在 Claude agent 中集成状态跟踪。
 
 ## 快速开始
 
@@ -219,9 +59,11 @@ python3 start_mcp_server.py
       "args": ["/path/to/your/start_mcp_server.py"],
       "disabled": false,
       "autoApprove": [
-        "update_agent_status",
-        "get_agent_status", 
-        "list_active_agents"
+        "update_task_status",
+        "get_task_status",
+        "get_agent_status",
+        "list_running_tasks",
+        "get_storage_info"
       ]
     }
   }
@@ -231,18 +73,110 @@ python3 start_mcp_server.py
 ### 4. 在 Claude Agent 中使用
 ```python
 # 在你的 Claude Agent 代码中
-await update_agent_status(
-    agent_id="claude-coder-001",
-    task_id="task-20241229-143022", 
+await update_task_status(
+    task_id="task-001",
+    agent_id="claude-coder-001", 
     status="running",
-    current_action="code_writing",
-    progress_percentage=60,
+    current_action="编写代码",
     message="正在编写新功能代码",
+    progress_percentage=60,
     details={
         "files_modified": ["src/main.py"],
         "lines_added": 45
     }
 )
+```
+
+## MCP 工具
+
+### 1. update_task_status
+更新任务状态
+```python
+update_task_status(
+    task_id="task-001",
+    agent_id="claude-coder-001",
+    status="running",
+    current_action="编写代码",
+    message="正在编写新功能",
+    progress_percentage=60.0,
+    details={
+        "files_modified": ["src/main.py"],
+        "lines_added": 45
+    }
+)
+```
+
+### 2. get_task_status
+获取任务状态
+```python
+get_task_status(task_id="task-001")
+```
+
+### 3. get_agent_status
+获取 Agent 当前状态
+```python
+get_agent_status(agent_id="claude-coder-001")
+```
+
+### 4. list_running_tasks
+列出所有运行中的任务
+```python
+list_running_tasks()
+```
+
+### 5. get_storage_info
+获取存储信息和统计
+```python
+get_storage_info()
+```
+
+## 存储结构
+
+默认存储路径：`~/.task-manager/agent-status/`
+
+可通过环境变量 `AGENT_STATUS_STORAGE_PATH` 配置存储路径：
+```bash
+export AGENT_STATUS_STORAGE_PATH="/custom/path/to/storage"
+python3 start_mcp_server.py
+```
+
+```
+~/.task-manager/agent-status/
+├── tasks/           # 任务状态文件
+│   ├── task-001.json
+│   └── task-002.json
+└── agents/          # Agent 当前任务文件
+    ├── claude-coder-001.json
+    └── claude-coder-002.json
+```
+
+### 任务文件格式
+```json
+{
+  "task_id": "task-001",
+  "agent_id": "claude-coder-001",
+  "status": "running",
+  "current_action": "编写代码",
+  "progress_percentage": 60.0,
+  "message": "正在编写新功能代码",
+  "details": {
+    "files_modified": ["src/main.py"],
+    "lines_added": 45
+  },
+  "created_at": "2024-12-29T14:30:22Z",
+  "updated_at": "2024-12-29T14:35:22Z"
+}
+```
+
+### Agent 文件格式
+```json
+{
+  "agent_id": "claude-coder-001",
+  "current_task": {
+    // 当前任务的完整信息
+  },
+  "last_updated": "2024-12-29T14:35:22Z"
+}
 ```
 
 ## 项目文件说明
@@ -251,25 +185,22 @@ await update_agent_status(
 |------|------|
 | `agent_status_mcp.py` | **核心文件** - MCP 服务器实现，包含所有数据结构、存储逻辑和工具 |
 | `start_mcp_server.py` | **启动脚本** - 友好的服务器启动界面 |
-| `test_agent_status_mcp.py` | **完整测试套件** - 包含所有功能测试 |
-| `example_claude_agent.py` | **使用示例** - 展示 Claude Agent 如何正确使用 MCP |
+| `simple_test.py` | **简单测试** - 直接调用功能的测试脚本 |
 | `requirements.txt` | **依赖文件** - Python 包依赖列表 |
 | `mcp-config-example.json` | **配置示例** - Kiro MCP 配置模板 |
 | `README.md` | **项目文档** - 完整的使用说明 |
-| `AGENT_USAGE_GUIDE.md` | **使用指南** - Claude Agent 集成指南 |
-| `PROJECT_SUMMARY.md` | **项目总结** - 技术架构和设计说明 |
+| `MANUAL_TESTING_GUIDE.md` | **手动测试指南** - 终端 JSON-RPC 交互详细说明 |
 
 ## 测试
 
-运行完整测试套件：
+### 自动化测试
+运行简单测试：
 ```bash
-python3 test_agent_status_mcp.py
+python3 simple_test.py
 ```
 
-运行使用示例：
-```bash
-python3 example_claude_agent.py
-```
+### 手动终端测试
+详细的手动测试指南请参考：[MANUAL_TESTING_GUIDE.md](MANUAL_TESTING_GUIDE.md)
 
 ## 扩展计划
 

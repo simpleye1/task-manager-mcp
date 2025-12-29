@@ -16,12 +16,13 @@ from agent_status_mcp import mcp
 
 if __name__ == "__main__":
     print("🚀 启动 Agent Status MCP 服务器...")
-    print(f"📁 存储路径: ~/.task-manager/agent-sync-mcp/")
+    print(f"📁 存储路径: ~/.task-manager/agent-status/")
+    print("   (可通过环境变量 AGENT_STATUS_STORAGE_PATH 配置)")
     print("🔧 可用工具:")
-    print("   - update_agent_status: 更新 agent 状态")
-    print("   - get_agent_status: 获取 agent 状态")
+    print("   - update_task_status: 更新任务状态")
     print("   - get_task_status: 获取任务状态")
-    print("   - list_active_agents: 列出活跃 agents")
+    print("   - get_agent_status: 获取 Agent 状态")
+    print("   - list_running_tasks: 列出运行中的任务")
     print("   - get_storage_info: 获取存储信息")
     print()
     
