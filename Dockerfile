@@ -23,7 +23,8 @@ RUN useradd --create-home --shell /bin/bash mcp
 USER mcp
 
 # Set environment variables with defaults
-ENV TASK_MANAGER_HOST=localhost
+# Use host.docker.internal to access host machine from container
+ENV TASK_MANAGER_HOST=host.docker.internal
 ENV TASK_MANAGER_PORT=8080
 ENV TASK_MANAGER_TIMEOUT=30
 ENV USE_MOCK_CLIENT=false

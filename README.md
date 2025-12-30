@@ -59,10 +59,10 @@ chmod +x build-docker.sh
 ./build-docker.sh
 ```
 
-#### 2. Add to Claude Desktop
+#### 2. Add to Claude Desktop (macOS/Windows)
 ```bash
-claude mcp add agent-sync -s user\
-  --env "TASK_MANAGER_HOST=localhost" \
+claude mcp add agent-sync -s user \
+  --env "TASK_MANAGER_HOST=host.docker.internal" \
   --env "TASK_MANAGER_PORT=8080" \
   --env "TASK_MANAGER_TIMEOUT=30" \
   --env "USE_MOCK_CLIENT=false" \
@@ -74,26 +74,49 @@ claude mcp add agent-sync -s user\
     agent-sync-mcp:latest
 ```
 
-#### 3. Add to Claude Desktop (Mock Mode for Testing)
+#### 3. Add to Claude Desktop (Linux)
 ```bash
-claude mcp add agent-sync-mock -s user\
+claude mcp add agent-sync -s user \
+  --env "TASK_MANAGER_HOST=localhost" \
+  --env "TASK_MANAGER_PORT=8080" \
+  --env "TASK_MANAGER_TIMEOUT=30" \
+  --env "USE_MOCK_CLIENT=false" \
+  -- docker run -i --rm --network=host \
+    -e TASK_MANAGER_HOST \
+    -e TASK_MANAGER_PORT \
+    -e TASK_MANAGER_TIMEOUT \
+    -e USE_MOCK_CLIENT \
+    agent-sync-mcp:latest
+```
+
+#### 4. Add to Claude Desktop (Mock Mode for Testing)
+```bash
+claude mcp add agent-sync-mock -s user \
   --env "USE_MOCK_CLIENT=true" \
   -- docker run -i --rm \
     -e USE_MOCK_CLIENT \
     agent-sync-mcp:latest
 ```
 
-#### 4. Manual Docker Run (for testing)
+#### 5. Manual Docker Run (for testing)
 ```bash
-# Production mode
+# macOS/Windows
 docker run -i --rm \
+  -e TASK_MANAGER_HOST=host.docker.internal \
+  -e TASK_MANAGER_PORT=8080 \
+  -e TASK_MANAGER_TIMEOUT=30 \
+  -e USE_MOCK_CLIENT=false \
+  agent-sync-mcp:latest
+
+# Linux
+docker run -i --rm --network=host \
   -e TASK_MANAGER_HOST=localhost \
   -e TASK_MANAGER_PORT=8080 \
   -e TASK_MANAGER_TIMEOUT=30 \
   -e USE_MOCK_CLIENT=false \
   agent-sync-mcp:latest
 
-# Mock mode for testing
+# Mock mode (all platforms)
 docker run -i --rm \
   -e USE_MOCK_CLIENT=true \
   agent-sync-mcp:latest
