@@ -57,8 +57,8 @@ export TASK_MANAGER_TIMEOUT=30
 python3 agent_status_mcp.py
 ```
 
-### 4. 在 MCP 客户端中使用
-将以下配置添加到你的 MCP 配置文件中：
+### 4. 在 Claude Code CLI 中配置
+在 Claude Code CLI 的配置文件中添加：
 ```json
 {
   "mcpServers": {
@@ -69,15 +69,7 @@ python3 agent_status_mcp.py
         "TASK_MANAGER_HOST": "localhost",
         "TASK_MANAGER_PORT": "8080",
         "TASK_MANAGER_TIMEOUT": "30"
-      },
-      "disabled": false,
-      "autoApprove": [
-        "update_task_status",
-        "get_task_status",
-        "get_session_status",
-        "list_running_tasks",
-        "health_check"
-      ]
+      }
     }
   }
 }
@@ -162,66 +154,6 @@ MCP 服务器通过以下 API 端点与 Task Manager 服务通信：
 | `TASK_MANAGER_HOST` | `localhost` | Task Manager 服务主机 |
 | `TASK_MANAGER_PORT` | `8080` | Task Manager 服务端口 |
 | `TASK_MANAGER_TIMEOUT` | `30` | API 调用超时时间（秒） |
-获取存储信息和统计
-```python
-get_storage_info()
-```
-
-## 存储结构
-
-默认存储路径：`~/.task-manager/agent-status/`
-
-可通过环境变量 `AGENT_STATUS_STORAGE_PATH` 配置存储路径：
-```bash
-export AGENT_STATUS_STORAGE_PATH="/custom/path/to/storage"
-python3 start_mcp_server.py
-```
-
-新的层次化存储结构（每个 agent 下有自己的 tasks）：
-```
-~/.task-manager/agent-status/
-└── agents/
-    ├── claude-coder-001/
-    │   ├── current_task.json    # 当前任务信息
-    │   └── tasks/               # 该 agent 的所有任务
-    │       ├── task-001.json
-    │       ├── task-002.json
-    │       └── task-003.json
-    └── claude-coder-002/
-        ├── current_task.json
-        └── tasks/
-            ├── task-004.json
-            └── task-005.json
-```
-
-### 任务文件格式 (agents/{agent_id}/tasks/{task_id}.json)
-```json
-{
-  "task_id": "task-001",
-  "agent_id": "claude-coder-001",
-  "status": "running",
-  "current_action": "编写代码",
-  "progress_percentage": 60.0,
-  "message": "正在编写新功能代码",
-  "details": {
-    "files_modified": ["src/main.py"],
-    "lines_added": 45
-  },
-  "created_at": "2024-12-29T14:30:22Z",
-  "updated_at": "2024-12-29T14:35:22Z"
-}
-```
-
-### Agent 当前任务文件格式 (agents/{agent_id}/current_task.json)
-```json
-{
-  "agent_id": "claude-coder-001",
-  "current_task": {
-    // 当前任务的完整信息
-  },
-  "last_updated": "2024-12-29T14:35:22Z"
-}
-```
 
 ## 项目文件说明
 
@@ -230,7 +162,7 @@ python3 start_mcp_server.py
 | `agent_status_mcp.py` | **核心文件** - MCP 服务器实现，包含 Task Manager API 客户端 |
 | `simple_test.py` | **测试脚本** - 测试 Task Manager 客户端功能 |
 | `requirements.txt` | **依赖文件** - Python 包依赖列表 |
-| `mcp-config-example.json` | **配置示例** - MCP 配置模板 |
+| `mcp-config-example.json` | **配置示例** - Claude Code CLI MCP 配置模板 |
 | `README.md` | **项目文档** - 完整的使用说明 |
 | `MANUAL_TESTING_GUIDE.md` | **手动测试指南** - 终端 JSON-RPC 交互详细说明 |
 
