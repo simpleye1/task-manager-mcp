@@ -12,16 +12,8 @@ models_path = Path(__file__).parent.parent / "models"
 sys.path.insert(0, str(models_path))
 from models import TaskUpdate
 
-# Import from local modules
-import sys
-from pathlib import Path
-clients_path = Path(__file__).parent.parent / "clients"
-sys.path.insert(0, str(clients_path))
 
-from client_interface import TaskManagerClient
-
-
-class MockTaskManagerClient(TaskManagerClient):
+class MockTaskManagerClient:
     """Mock implementation for testing"""
     
     def __init__(self):

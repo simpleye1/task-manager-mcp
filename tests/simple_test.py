@@ -25,7 +25,6 @@ def test_http_client():
     client = HttpTaskManagerClient()
     print(f"✅ Client initialized successfully")
     print(f"   Task Manager URL: {client.base_url}")
-    print(f"   Timeout setting: {client.timeout}s")
     
     # Health check
     print("\n🔍 Performing health check...")

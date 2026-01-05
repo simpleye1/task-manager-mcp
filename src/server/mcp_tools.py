@@ -1,26 +1,22 @@
 #!/usr/bin/env python3
 """
-MCP tools implementation
+MCP tools implementation - simplified without interface layer
 """
 
-from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 import fastmcp
 
 # Import from local modules
 import sys
 from pathlib import Path
-models_path = Path(__file__).parent.parent / "models"
 clients_path = Path(__file__).parent.parent / "clients"
-sys.path.insert(0, str(models_path))
 sys.path.insert(0, str(clients_path))
 
-from models import TaskUpdate, TaskStatus
 from client_factory import create_task_manager_client
 
 
-# Initialize Task Manager client
-task_manager = create_task_manager_client()
+# Create client instance
+task_client = create_task_manager_client()
 
 # Create FastMCP application
 mcp = fastmcp.FastMCP("Agent Status Tracker")
@@ -51,6 +47,9 @@ def update_task_status(
     Returns:
         Operation result
     """
+    from datetime import datetime, timezone
+    from models import TaskUpdate, TaskStatus
+    
     try:
         # Validate status value
         task_status = TaskStatus(status)
@@ -67,8 +66,8 @@ def update_task_status(
             timestamp=datetime.now(timezone.utc).isoformat()
         )
         
-        # Call Task Manager API
-        result = task_manager.update_task_status(task_update)
+        # Call client directly
+        result = task_client.update_task_status(task_update)
         
         if result["success"]:
             return {
@@ -79,7 +78,7 @@ def update_task_status(
             }
         else:
             return result
-        
+            
     except ValueError as e:
         return {
             "success": False,
@@ -93,31 +92,33 @@ def update_task_status(
 
 
 @mcp.tool()
-def get_task_status(session_id: str) -> Dict[str, Any]:
+def get_task_status(session_id: str, id_type: str = "session_id") -> Dict[str, Any]:
     """
     Get task status
     
     Args:
         session_id: Session unique identifier
+        id_type: Type of identifier (session_id or task_id)
     
     Returns:
         Task status information
     """
-    return task_manager.get_task_status(session_id)
+    return task_client.get_task_status(session_id, id_type=id_type)
 
 
 @mcp.tool()
-def get_task_history(session_id: str) -> Dict[str, Any]:
+def get_task_history(session_id: str, id_type: str = "session_id") -> Dict[str, Any]:
     """
     Get task complete history
     
     Args:
         session_id: Session unique identifier
+        id_type: Type of identifier (session_id or task_id)
     
     Returns:
         Complete task history including status changes and logs
     """
-    return task_manager.get_task_history(session_id)
+    return task_client.get_task_history(session_id, id_type=id_type)
 
 
 @mcp.tool()
@@ -128,4 +129,4 @@ def health_check() -> Dict[str, Any]:
     Returns:
         Health check result and configuration information
     """
-    return task_manager.health_check()
+    return task_client.health_check()

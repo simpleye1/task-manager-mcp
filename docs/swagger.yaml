@@ -1,0 +1,344 @@
+components:
+  schemas:
+    http.ErrorResponse:
+      properties:
+        error:
+          type: string
+        error_code:
+          type: string
+        success:
+          type: boolean
+        timestamp:
+          type: string
+      type: object
+    http.HealthResponse:
+      properties:
+        status:
+          type: string
+        timestamp:
+          type: string
+        version:
+          type: string
+      type: object
+    http.LogEntry:
+      properties:
+        created_at:
+          type: string
+        id:
+          type: integer
+        log_level:
+          $ref: '#/components/schemas/http.LogLevel'
+        log_message:
+          type: string
+      type: object
+    http.LogLevel:
+      type: string
+      x-enum-varnames:
+      - LogLevelDebug
+      - LogLevelInfo
+      - LogLevelWarn
+      - LogLevelError
+    http.TaskHistoryData:
+      properties:
+        logs:
+          items:
+            $ref: '#/components/schemas/http.LogEntry'
+          type: array
+          uniqueItems: false
+        status_history:
+          items:
+            $ref: '#/components/schemas/http.TaskHistoryEntry'
+          type: array
+          uniqueItems: false
+        task_info:
+          $ref: '#/components/schemas/http.TaskInfo'
+      type: object
+    http.TaskHistoryEntry:
+      properties:
+        created_at:
+          type: string
+        current_action:
+          type: string
+        details:
+          additionalProperties: {}
+          type: object
+        id:
+          type: integer
+        message:
+          type: string
+        progress_percentage:
+          type: number
+        status:
+          type: string
+          x-enum-varnames:
+          - TaskStatusRunning
+          - TaskStatusSuccess
+          - TaskStatusFailed
+      type: object
+    http.TaskHistoryResponse:
+      properties:
+        data:
+          $ref: '#/components/schemas/http.TaskHistoryData'
+        success:
+          type: boolean
+      type: object
+    http.TaskInfo:
+      properties:
+        created_at:
+          type: string
+        current_action:
+          type: string
+        details:
+          additionalProperties: {}
+          type: object
+        jira_ticket:
+          type: string
+        message:
+          type: string
+        progress_percentage:
+          type: number
+        session_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/http.TaskStatus'
+        task_id:
+          type: string
+        updated_at:
+          type: string
+      type: object
+    http.TaskStatus:
+      type: string
+      x-enum-varnames:
+      - TaskStatusRunning
+      - TaskStatusSuccess
+      - TaskStatusFailed
+    http.TaskStatusResponse:
+      properties:
+        data:
+          $ref: '#/components/schemas/http.TaskInfo'
+        success:
+          type: boolean
+      type: object
+    http.TaskUpdateRequest:
+      properties:
+        current_action:
+          type: string
+        details:
+          additionalProperties: {}
+          type: object
+        jira_ticket:
+          type: string
+        message:
+          type: string
+        progress_percentage:
+          maximum: 100
+          minimum: 0
+          type: number
+        session_id:
+          type: string
+        status:
+          enum:
+          - running
+          - success
+          - failed
+          type: string
+          x-enum-varnames:
+          - TaskStatusRunning
+          - TaskStatusSuccess
+          - TaskStatusFailed
+        timestamp:
+          type: string
+      required:
+      - current_action
+      - jira_ticket
+      - message
+      - session_id
+      - status
+      type: object
+    http.TaskUpdateResponse:
+      properties:
+        message:
+          type: string
+        success:
+          type: boolean
+        task_id:
+          type: string
+      type: object
+externalDocs:
+  description: ""
+  url: ""
+info:
+  title: ""
+  version: ""
+openapi: 3.1.0
+paths:
+  /api/health:
+    get:
+      description: Check if the Task Manager service is healthy
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/http.HealthResponse'
+          description: OK
+      summary: Health check
+      tags:
+      - health
+  /api/tasks/{identifier}:
+    get:
+      description: Get the current status of a task by identifier
+      parameters:
+      - description: Task identifier (session_id or task_id)
+        in: path
+        name: identifier
+        required: true
+        schema:
+          type: string
+      - description: Type of identifier
+        in: query
+        name: id_type
+        schema:
+          default: session_id
+          enum:
+          - session_id
+          - task_id
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/http.TaskStatusResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/http.ErrorResponse'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/http.ErrorResponse'
+          description: Not Found
+      summary: Get task status
+      tags:
+      - tasks
+  /api/tasks/{identifier}/history:
+    get:
+      description: Get complete task history including status changes and logs
+      parameters:
+      - description: Task identifier (session_id or task_id)
+        in: path
+        name: identifier
+        required: true
+        schema:
+          type: string
+      - description: Type of identifier
+        in: query
+        name: id_type
+        schema:
+          default: session_id
+          enum:
+          - session_id
+          - task_id
+          type: string
+      - description: Maximum number of history entries
+        in: query
+        name: limit
+        schema:
+          default: 100
+          maximum: 1000
+          minimum: 1
+          type: integer
+      - description: Number of entries to skip
+        in: query
+        name: offset
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/http.TaskHistoryResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/http.ErrorResponse'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/http.ErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/http.ErrorResponse'
+          description: Internal Server Error
+      summary: Get task history
+      tags:
+      - tasks
+  /api/tasks/{identifier}/status:
+    put:
+      description: Update task status and create history record
+      parameters:
+      - description: Task identifier (session_id or task_id)
+        in: path
+        name: identifier
+        required: true
+        schema:
+          type: string
+      - description: Type of identifier
+        in: query
+        name: id_type
+        schema:
+          default: session_id
+          enum:
+          - session_id
+          - task_id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/http.TaskUpdateRequest'
+        description: Task update request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/http.TaskUpdateResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/http.ErrorResponse'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/http.ErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/http.ErrorResponse'
+          description: Internal Server Error
+      summary: Update task status
+      tags:
+      - tasks
