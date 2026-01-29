@@ -6,49 +6,64 @@ Base client interface for Task Manager clients
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 
-from src.models import TaskUpdate
-
 
 class TaskManagerClientBase(ABC):
     """Abstract base class defining the Task Manager client interface"""
     
     @abstractmethod
-    def update_task(self, task_id: str, task_update: TaskUpdate) -> Dict[str, Any]:
-        """Update task by task_id
+    def patch_execution(
+        self, 
+        execution_id: str, 
+        session_id: str
+    ) -> Dict[str, Any]:
+        """Update execution's session_id
         
         Args:
-            task_id: Task identifier
-            task_update: Task update data
+            execution_id: Execution identifier
+            session_id: Session ID to set
             
         Returns:
-            Dict with 'success' bool and either 'message'/'task_id' or 'error'
+            Dict with 'success' bool and execution data or 'error'
         """
         pass
     
     @abstractmethod
-    def get_task(self, session_id: Optional[str] = None, task_id: Optional[str] = None) -> Dict[str, Any]:
-        """Get task by session_id or task_id
+    def create_step(
+        self, 
+        execution_id: str, 
+        step_name: str,
+        message: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Create a new step for an execution
         
         Args:
-            session_id: Session identifier (optional)
-            task_id: Task identifier (optional)
+            execution_id: Execution identifier
+            step_name: Name of the step
+            message: Optional message for the step
             
         Returns:
-            Dict with 'success' bool and either 'data' or 'error'
+            Dict with 'success' bool and step data or 'error'
         """
         pass
     
     @abstractmethod
-    def get_task_history(self, task_id: str, limit: int = 100, offset: int = 0) -> Dict[str, Any]:
-        """Get task history by task_id
+    def patch_step(
+        self, 
+        execution_id: str, 
+        step_id: str,
+        status: Optional[str] = None,
+        message: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Partially update a step
         
         Args:
-            task_id: Task identifier
-            limit: Maximum number of history entries
-            offset: Number of entries to skip
+            execution_id: Execution identifier
+            step_id: Step identifier
+            status: New status (optional)
+            message: New message (optional)
             
         Returns:
-            Dict with 'success' bool and either 'data' or 'error'
+            Dict with 'success' bool and step data or 'error'
         """
         pass
     

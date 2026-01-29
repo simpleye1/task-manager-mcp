@@ -1,119 +1,83 @@
 #!/usr/bin/env python3
 """
-Simple functionality test
+Simple tests for MCP client functionality
 """
 
-import sys
 import os
-from datetime import datetime, timezone
-from pathlib import Path
+import sys
 
-# Add project root to Python path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+os.environ['USE_MOCK_CLIENT'] = 'true'
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.clients import HttpTaskManagerClient, MockTaskManagerClient
-from src.models import TaskUpdate, TaskStatus
+from src.clients import create_task_manager_client
+
+client = create_task_manager_client()
 
 
-def test_http_client():
-    """Test HTTP Task Manager client"""
-    print("🧪 Testing HTTP Task Manager Client")
-    print("="*50)
-    
-    client = HttpTaskManagerClient()
-    print(f"✅ Client initialized: {client.base_url}")
-    
-    # Health check
-    print("\n🔍 Health check...")
-    health_result = client.health_check()
-    if health_result["success"]:
-        print(f"✅ Healthy: {health_result['config']}")
-    else:
-        print(f"❌ Unhealthy: {health_result['error']}")
-        print("   (Expected if service not running)")
-    
-    # Create task update
-    task_update = TaskUpdate(
-        session_id="test-session-001",
-        jira_ticket="PROJ-123",
-        status=TaskStatus.RUNNING,
-        current_action="Testing API",
-        progress_percentage=50,
-        message="Testing client",
-        details={"test": True},
-        timestamp=datetime.now(timezone.utc).isoformat()
+def test_health_check():
+    result = client.health_check()
+    assert result["success"] is True
+    print("✓ health_check")
+
+
+def test_patch_execution():
+    result = client.patch_execution(
+        execution_id="exec-123",
+        session_id="session-abc"
     )
-    
-    # Update task
-    print("\n📝 Update task...")
-    result = client.update_task("task-001", task_update)
-    print(f"   Result: {result}")
-    
-    # Get task
-    print("\n📊 Get task by session_id...")
-    result = client.get_task(session_id="test-session-001")
-    print(f"   Result: {result}")
-    
-    # Get history
-    print("\n📜 Get task history...")
-    result = client.get_task_history("task-001")
-    print(f"   Result: {result}")
-    
-    print("\n🎉 HTTP client test completed!")
+    assert result["success"] is True
+    assert result["data"]["session_id"] == "session-abc"
+    print("✓ patch_execution")
 
 
-def test_mock_client():
-    """Test Mock Task Manager client"""
-    print("\n🧪 Testing Mock Task Manager Client")
-    print("="*50)
-    
-    client = MockTaskManagerClient()
-    print("✅ Mock client initialized")
-    
-    # Health check
-    print("\n🔍 Health check...")
-    health_result = client.health_check()
-    print(f"✅ {health_result['message']}")
-    
-    # Create task update
-    task_update = TaskUpdate(
-        session_id="mock-session-001",
-        jira_ticket="MOCK-123",
-        status=TaskStatus.RUNNING,
-        current_action="Testing mock",
-        progress_percentage=75,
-        message="Mock test",
-        details={"mock": True},
-        timestamp=datetime.now(timezone.utc).isoformat()
+def test_create_and_update_step():
+    result = client.create_step(
+        execution_id="exec-123",
+        step_name="analyzing",
+        message="Analyzing codebase"
     )
+    assert result["success"] is True
+    assert result["data"]["status"] == "running"
+    print("✓ create_step")
     
-    # Update task
-    print("\n📝 Update task...")
-    result = client.update_task("mock-task-001", task_update)
-    print(f"✅ {result['message']}")
+    step_id = result["data"]["step_id"]
     
-    # Get task by session_id
-    print("\n📊 Get task by session_id...")
-    result = client.get_task(session_id="mock-session-001")
-    if result["success"]:
-        print(f"✅ Found: session={result['data']['session_id']}, status={result['data']['status']}")
+    result = client.patch_step(
+        execution_id="exec-123",
+        step_id=step_id,
+        status="completed",
+        message="Done"
+    )
+    assert result["success"] is True
+    assert result["data"]["status"] == "completed"
+    print("✓ patch_step")
+
+
+def test_workflow():
+    print("\n--- Workflow ---")
     
-    # Get task by task_id
-    print("\n📊 Get task by task_id...")
-    result = client.get_task(task_id="mock-task-001")
-    if result["success"]:
-        print(f"✅ Found: task_id={result['data']['task_id']}")
+    client.patch_execution("exec-wf", "nova-001")
+    print("  1. Session registered")
     
-    # Get history
-    print("\n📜 Get task history...")
-    result = client.get_task_history("mock-task-001")
-    if result["success"]:
-        print(f"✅ History entries: {len(result['data']['status_history'])}")
+    r = client.create_step("exec-wf", "analyzing", "Starting")
+    step1 = r["data"]["step_id"]
+    print(f"  2. Step: {step1}")
     
-    print("\n🎉 Mock client test completed!")
+    client.patch_step("exec-wf", step1, "completed", "Done")
+    print("  3. Completed")
+    
+    r = client.create_step("exec-wf", "coding")
+    step2 = r["data"]["step_id"]
+    client.patch_step("exec-wf", step2, "completed")
+    print("  4. Coding done")
+    
+    print("✓ workflow\n")
 
 
 if __name__ == "__main__":
-    test_http_client()
-    test_mock_client()
+    print("Running tests...\n")
+    test_health_check()
+    test_patch_execution()
+    test_create_and_update_step()
+    test_workflow()
+    print("✅ All passed!")

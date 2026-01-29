@@ -1,3 +1,8 @@
-from .models import TaskStatus, TaskUpdate
+#!/usr/bin/env python3
+"""
+Models package
+"""
 
-__all__ = ['TaskStatus', 'TaskUpdate']
+from src.models.models import StepStatus, ExecutionPatch, StepCreate, StepPatch
+
+__all__ = ['StepStatus', 'ExecutionPatch', 'StepCreate', 'StepPatch']

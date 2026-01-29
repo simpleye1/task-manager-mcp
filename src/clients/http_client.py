@@ -1,190 +1,121 @@
 #!/usr/bin/env python3
 """
-HTTP implementation using auto-generated client
+HTTP client implementation for Task Manager API
 """
 
 import os
 from typing import Dict, Any, Optional
+import httpx
 
-from src.models import TaskUpdate
 from src.clients.base_client import TaskManagerClientBase
-
-# Import generated client
-from src.clients.generated._client import Client
-from src.clients.generated._client.api.tasks import (
-    post_api_tasks,
-    get_api_tasks,
-    get_api_tasks_history
-)
-from src.clients.generated._client.api.health import get_api_health
-from src.clients.generated._client.models import (
-    HttpTaskUpdateRequest,
-    HttpTaskUpdateRequestStatus,
-    HttpErrorResponse,
-    HttpTaskUpdateResponse,
-    HttpTaskStatusResponse,
-    HttpTaskHistoryResponse
-)
-from src.clients.generated._client.types import UNSET
 
 
 class HttpTaskManagerClient(TaskManagerClientBase):
-    """HTTP implementation using auto-generated client"""
+    """HTTP implementation for Task Manager API"""
     
     def __init__(self):
         self.host = os.getenv('TASK_MANAGER_HOST', 'localhost')
         self.port = os.getenv('TASK_MANAGER_PORT', '8080')
         self.base_url = f"http://{self.host}:{self.port}"
-        timeout_seconds = int(os.getenv('TASK_MANAGER_TIMEOUT', '30'))
-        
-        self.client = Client(
-            base_url=self.base_url,
-            timeout=timeout_seconds
+        self.timeout = int(os.getenv('TASK_MANAGER_TIMEOUT', '30'))
+    
+    def _make_request(
+        self, 
+        method: str, 
+        path: str, 
+        json_data: Optional[Dict] = None
+    ) -> Dict[str, Any]:
+        """Make HTTP request and handle response"""
+        try:
+            with httpx.Client(base_url=self.base_url, timeout=self.timeout) as client:
+                response = client.request(
+                    method=method,
+                    url=path,
+                    json=json_data
+                )
+                
+                if response.status_code >= 400:
+                    error_data = response.json()
+                    return {
+                        "success": False,
+                        "error": error_data.get("error", "Unknown error"),
+                        "error_code": error_data.get("error_code"),
+                        "status_code": response.status_code
+                    }
+                
+                return response.json()
+                
+        except httpx.TimeoutException:
+            return {"success": False, "error": "Request timeout"}
+        except httpx.ConnectError:
+            return {"success": False, "error": f"Connection failed to {self.base_url}"}
+        except Exception as e:
+            return {"success": False, "error": f"Request failed: {str(e)}"}
+    
+    def patch_execution(
+        self, 
+        execution_id: str, 
+        session_id: str
+    ) -> Dict[str, Any]:
+        """Update execution's session_id"""
+        return self._make_request(
+            "PATCH",
+            f"/api/executions/{execution_id}",
+            json_data={"session_id": session_id}
         )
     
-    def _convert_task_update_to_request(self, task_update: TaskUpdate) -> HttpTaskUpdateRequest:
-        """Convert TaskUpdate to HttpTaskUpdateRequest"""
-        status_map = {
-            "running": HttpTaskUpdateRequestStatus.RUNNING,
-            "success": HttpTaskUpdateRequestStatus.SUCCESS,
-            "failed": HttpTaskUpdateRequestStatus.FAILED
-        }
+    def create_step(
+        self, 
+        execution_id: str, 
+        step_name: str,
+        message: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Create a new step for an execution"""
+        body = {"step_name": step_name}
+        if message is not None:
+            body["message"] = message
         
-        details = UNSET
-        if task_update.details:
-            from src.clients.generated._client.models.http_task_update_request_details import HttpTaskUpdateRequestDetails
-            details_obj = HttpTaskUpdateRequestDetails()
-            for key, value in task_update.details.items():
-                details_obj[key] = value
-            details = details_obj
-        
-        return HttpTaskUpdateRequest(
-            session_id=task_update.session_id,
-            jira_ticket=task_update.jira_ticket,
-            status=status_map[task_update.status.value],
-            current_action=task_update.current_action,
-            message=task_update.message,
-            progress_percentage=task_update.progress_percentage if task_update.progress_percentage is not None else UNSET,
-            details=details,
-            timestamp=task_update.timestamp if task_update.timestamp else UNSET
+        return self._make_request(
+            "POST",
+            f"/api/executions/{execution_id}/steps",
+            json_data=body
         )
     
-    def _handle_response_error(self, response) -> Dict[str, Any]:
-        """Handle error responses"""
-        if isinstance(response, HttpErrorResponse):
-            return {
-                "success": False,
-                "error": response.error,
-                "error_code": getattr(response, 'error_code', None),
-                "timestamp": getattr(response, 'timestamp', None)
-            }
-        return {"success": False, "error": "Unknown error response"}
-    
-    def update_task(self, task_id: str, task_update: TaskUpdate) -> Dict[str, Any]:
-        """Update task by task_id"""
-        try:
-            request = self._convert_task_update_to_request(task_update)
-            
-            response = post_api_tasks.sync(
-                client=self.client,
-                body=request,
-                task_id=task_id
-            )
-            
-            if response is None:
-                return {"success": False, "error": "No response from server"}
-            
-            if isinstance(response, HttpErrorResponse):
-                return self._handle_response_error(response)
-            
-            if isinstance(response, HttpTaskUpdateResponse):
-                return {
-                    "success": response.success if hasattr(response, 'success') else True,
-                    "message": response.message,
-                    "task_id": getattr(response, 'task_id', None)
-                }
-            
-            return {"success": False, "error": f"Unexpected response type: {type(response)}"}
-            
-        except Exception as e:
-            return {"success": False, "error": f"API call exception: {str(e)}"}
-    
-    def get_task(self, session_id: Optional[str] = None, task_id: Optional[str] = None) -> Dict[str, Any]:
-        """Get task by session_id or task_id"""
-        try:
-            response = get_api_tasks.sync(
-                client=self.client,
-                session_id=session_id if session_id else UNSET,
-                task_id=task_id if task_id else UNSET
-            )
-            
-            if response is None:
-                return {"success": False, "error": "No response from server"}
-            
-            if isinstance(response, HttpErrorResponse):
-                return self._handle_response_error(response)
-            
-            if isinstance(response, HttpTaskStatusResponse):
-                return {
-                    "success": response.success if hasattr(response, 'success') else True,
-                    "data": response.data.to_dict() if hasattr(response.data, 'to_dict') else response.data
-                }
-            
-            return {"success": False, "error": f"Unexpected response type: {type(response)}"}
-            
-        except Exception as e:
-            return {"success": False, "error": f"API call exception: {str(e)}"}
-    
-    def get_task_history(self, task_id: str, limit: int = 100, offset: int = 0) -> Dict[str, Any]:
-        """Get task history by task_id"""
-        try:
-            response = get_api_tasks_history.sync(
-                client=self.client,
-                task_id=task_id,
-                limit=limit,
-                offset=offset
-            )
-            
-            if response is None:
-                return {"success": False, "error": "No response from server"}
-            
-            if isinstance(response, HttpErrorResponse):
-                return self._handle_response_error(response)
-            
-            if isinstance(response, HttpTaskHistoryResponse):
-                return {
-                    "success": response.success if hasattr(response, 'success') else True,
-                    "data": response.data.to_dict() if hasattr(response.data, 'to_dict') else response.data
-                }
-            
-            return {"success": False, "error": f"Unexpected response type: {type(response)}"}
-            
-        except Exception as e:
-            return {"success": False, "error": f"API call exception: {str(e)}"}
+    def patch_step(
+        self, 
+        execution_id: str, 
+        step_id: str,
+        status: Optional[str] = None,
+        message: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Partially update a step"""
+        body = {}
+        if status is not None:
+            body["status"] = status
+        if message is not None:
+            body["message"] = message
+        
+        if not body:
+            return {"success": False, "error": "No fields to update"}
+        
+        return self._make_request(
+            "PATCH",
+            f"/api/executions/{execution_id}/steps/{step_id}",
+            json_data=body
+        )
     
     def health_check(self) -> Dict[str, Any]:
         """Health check"""
-        try:
-            response = get_api_health.sync(client=self.client)
-            
-            if response is None:
-                return {"success": False, "error": "No response from server"}
-            
-            if isinstance(response, HttpErrorResponse):
-                return self._handle_response_error(response)
-            
+        result = self._make_request("GET", "/api/health")
+        if result.get("success", True) and "error" not in result:
             return {
                 "success": True,
                 "message": "Task Manager service is healthy",
                 "config": {
                     "host": self.host,
                     "port": self.port,
-                    "base_url": self.base_url,
-                    "status": getattr(response, 'status', 'healthy'),
-                    "version": getattr(response, 'version', 'unknown'),
-                    "timestamp": getattr(response, 'timestamp', None)
-                }
+                    "base_url": self.base_url
+                },
+                **result
             }
-            
-        except Exception as e:
-            return {"success": False, "error": f"Health check exception: {str(e)}"}
+        return result

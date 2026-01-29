@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """
-MCP tools implementation
+MCP tools for Nova Agent progress reporting
+
+Tools:
+- update_execution_session: Update execution's session_id
+- create_step: Create a new step in an execution
+- update_step: Update an existing step's status/message
+- health_check: Check Task Manager service health
 """
 
 from typing import Dict, Any, Optional
@@ -9,127 +15,134 @@ import fastmcp
 from src.clients import create_task_manager_client
 
 
-# Create client instance
 task_client = create_task_manager_client()
-
-# Create FastMCP application
-mcp = fastmcp.FastMCP("Agent Status Tracker")
+mcp = fastmcp.FastMCP("Nova Agent Sync")
 
 
 @mcp.tool()
-def update_task(
-    session_id: str,
-    jira_ticket: str,
-    status: str,
-    current_action: str,
-    message: str,
-    progress_percentage: float = 0.0,
-    details: Optional[Dict[str, Any]] = None
+def update_execution_session(
+    execution_id: str,
+    session_id: str
 ) -> Dict[str, Any]:
     """
-    Update task status for the current agent session
+    Update execution with session ID. Call this at the start to register your session.
     
     Args:
-        session_id: Your agent session ID (use your own session identifier)
-        jira_ticket: Jira ticket number you are working on
-        status: Sub-task status - "running" while in progress, "success" when completed, "failed" on error
-        current_action: Sub-task name in one word (e.g. analyzing, coding, testing, reviewing, deploying)
-        message: Detailed description of what you accomplished or encountered
-        progress_percentage: Your estimated overall progress (0-100)
-        details: Additional context as key-value pairs (optional)
+        execution_id: The execution ID you are working on
+        session_id: Your agent session ID to associate with this execution
     
     Returns:
-        Operation result
+        Updated execution information
     """
-    from datetime import datetime, timezone
-    from src.models import TaskUpdate, TaskStatus
-    
     try:
-        # First get task_id by session_id
-        get_result = task_client.get_task(session_id=session_id)
-        if not get_result["success"]:
-            return {"success": False, "error": f"Failed to get task: {get_result.get('error')}"}
-        
-        task_id = get_result["data"].get("task_id")
-        if not task_id:
-            return {"success": False, "error": "Task not found for session_id"}
-        
-        # Build task update
-        task_status = TaskStatus(status)
-        task_update = TaskUpdate(
-            session_id=session_id,
-            jira_ticket=jira_ticket,
-            status=task_status,
-            current_action=current_action,
-            progress_percentage=max(0, min(100, progress_percentage)),
-            message=message,
-            details=details or {},
-            timestamp=datetime.now(timezone.utc).isoformat()
+        result = task_client.patch_execution(
+            execution_id=execution_id,
+            session_id=session_id
         )
         
-        # Update task by task_id
-        result = task_client.update_task(task_id, task_update)
-        
-        if result["success"]:
+        if result.get("success"):
             return {
                 "success": True,
-                "message": f"Task {task_id} updated successfully",
-                "task_id": task_id,
-                "task_update": task_update.to_dict(),
-                "api_response": result
+                "message": f"Execution {execution_id} updated with session {session_id}",
+                "data": result.get("data")
             }
-        else:
-            return result
-            
-    except ValueError as e:
-        return {"success": False, "error": f"Invalid status value: {str(e)}"}
+        return result
+        
     except Exception as e:
-        return {"success": False, "error": f"Failed to update task: {str(e)}"}
+        return {"success": False, "error": f"Failed to update execution: {str(e)}"}
 
 
 @mcp.tool()
-def get_task(session_id: str) -> Dict[str, Any]:
+def create_step(
+    execution_id: str,
+    step_name: str,
+    message: Optional[str] = None
+) -> Dict[str, Any]:
     """
-    Get current task information for your agent session
+    Create a new step in an execution. The step starts with 'running' status.
     
     Args:
-        session_id: Your agent session ID (use your own session identifier)
+        execution_id: The execution ID to create the step in
+        step_name: Name of the step (e.g., "analyzing", "coding", "testing")
+        message: Optional description of what this step will do
     
     Returns:
-        Task information including status, progress, and details
+        Created step information including step_id (save this for updates)
     """
-    return task_client.get_task(session_id=session_id)
+    try:
+        result = task_client.create_step(
+            execution_id=execution_id,
+            step_name=step_name,
+            message=message
+        )
+        
+        if result.get("success"):
+            step_data = result.get("data", {})
+            return {
+                "success": True,
+                "message": f"Step '{step_name}' created",
+                "step_id": step_data.get("step_id"),
+                "data": step_data
+            }
+        return result
+        
+    except Exception as e:
+        return {"success": False, "error": f"Failed to create step: {str(e)}"}
 
 
 @mcp.tool()
-def get_task_history(session_id: str, limit: int = 100, offset: int = 0) -> Dict[str, Any]:
+def update_step(
+    execution_id: str,
+    step_id: str,
+    status: Optional[str] = None,
+    message: Optional[str] = None
+) -> Dict[str, Any]:
     """
-    Get complete history of your agent session's task
+    Update an existing step's status and/or message.
     
     Args:
-        session_id: Your agent session ID (use your own session identifier)
-        limit: Maximum number of history entries to return (default 100)
-        offset: Number of entries to skip for pagination (default 0)
+        execution_id: The execution ID containing the step
+        step_id: The step ID to update (from create_step response)
+        status: New status - "running", "completed", "failed", or "skipped"
+        message: Updated message describing the outcome
     
     Returns:
-        Complete task history including all status changes and logs
+        Updated step information
     """
-    # First get task_id by session_id
-    get_result = task_client.get_task(session_id=session_id)
-    if not get_result["success"]:
-        return {"success": False, "error": f"Failed to get task: {get_result.get('error')}"}
+    if not status and not message:
+        return {"success": False, "error": "Provide at least status or message to update"}
     
-    task_id = get_result["data"].get("task_id")
-    if not task_id:
-        return {"success": False, "error": "Task not found for session_id"}
+    valid_statuses = {"running", "completed", "failed", "skipped"}
+    if status and status not in valid_statuses:
+        return {
+            "success": False, 
+            "error": f"Invalid status '{status}'. Must be one of: {', '.join(valid_statuses)}"
+        }
     
-    return task_client.get_task_history(task_id, limit=limit, offset=offset)
+    try:
+        result = task_client.patch_step(
+            execution_id=execution_id,
+            step_id=step_id,
+            status=status,
+            message=message
+        )
+        
+        if result.get("success"):
+            return {
+                "success": True,
+                "message": f"Step {step_id} updated",
+                "data": result.get("data")
+            }
+        return result
+        
+    except Exception as e:
+        return {"success": False, "error": f"Failed to update step: {str(e)}"}
 
 
 @mcp.tool()
 def health_check() -> Dict[str, Any]:
     """
-    Check Task Manager service health status
+    Check Task Manager service health status.
     
     Returns:
         Health check result and configuration information

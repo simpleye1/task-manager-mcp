@@ -1,41 +1,37 @@
 #!/usr/bin/env python3
 """
-Data models for Agent Status MCP Server
+Data models for Agent Sync MCP Server
 """
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Any
+from typing import Optional
 
 
-class TaskStatus(Enum):
-    """Task status enumeration"""
+class StepStatus(Enum):
+    """Step status enumeration"""
     RUNNING = "running"
-    SUCCESS = "success" 
+    COMPLETED = "completed"
     FAILED = "failed"
+    SKIPPED = "skipped"
 
 
 @dataclass
-class TaskUpdate:
-    """Task update data structure"""
-    session_id: str
-    jira_ticket: str
-    status: TaskStatus
-    current_action: str  # Current action description
-    progress_percentage: float  # 0-100
-    message: str
-    details: Dict[str, Any]  # Additional task details
-    timestamp: str
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary format"""
-        return {
-            "session_id": self.session_id,
-            "jira_ticket": self.jira_ticket,
-            "status": self.status.value,
-            "current_action": self.current_action,
-            "progress_percentage": self.progress_percentage,
-            "message": self.message,
-            "details": self.details,
-            "timestamp": self.timestamp
-        }
+class ExecutionPatch:
+    """Execution patch data structure"""
+    session_id: Optional[str] = None
+    worktree_path: Optional[str] = None
+
+
+@dataclass
+class StepCreate:
+    """Step creation data structure"""
+    step_name: str
+    message: Optional[str] = None
+
+
+@dataclass
+class StepPatch:
+    """Step patch data structure"""
+    status: Optional[StepStatus] = None
+    message: Optional[str] = None
