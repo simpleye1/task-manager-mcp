@@ -1,33 +1,29 @@
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.http_error_response import HttpErrorResponse
-from ...models.http_task_update_request import HttpTaskUpdateRequest
-from ...models.http_task_update_response import HttpTaskUpdateResponse
-from ...types import UNSET, Response
+from ...models.http_execution_response import HttpExecutionResponse
+from ...models.http_patch_execution_request import HttpPatchExecutionRequest
+from ...types import Response
 
 
 def _get_kwargs(
+    execution_id: str,
     *,
-    body: HttpTaskUpdateRequest,
-    task_id: str,
+    body: HttpPatchExecutionRequest,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
-    params: dict[str, Any] = {}
-
-    params["task_id"] = task_id
-
-    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
     _kwargs: dict[str, Any] = {
-        "method": "post",
-        "url": "/api/tasks",
-        "params": params,
+        "method": "patch",
+        "url": "/api/executions/{execution_id}".format(
+            execution_id=quote(str(execution_id), safe=""),
+        ),
     }
 
     _kwargs["json"] = body.to_dict()
@@ -40,9 +36,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> HttpErrorResponse | HttpTaskUpdateResponse | None:
+) -> HttpErrorResponse | HttpExecutionResponse | None:
     if response.status_code == 200:
-        response_200 = HttpTaskUpdateResponse.from_dict(response.json())
+        response_200 = HttpExecutionResponse.from_dict(response.json())
 
         return response_200
 
@@ -69,7 +65,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[HttpErrorResponse | HttpTaskUpdateResponse]:
+) -> Response[HttpErrorResponse | HttpExecutionResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -79,30 +75,30 @@ def _build_response(
 
 
 def sync_detailed(
+    execution_id: str,
     *,
     client: AuthenticatedClient | Client,
-    body: HttpTaskUpdateRequest,
-    task_id: str,
-) -> Response[HttpErrorResponse | HttpTaskUpdateResponse]:
-    """Update task
+    body: HttpPatchExecutionRequest,
+) -> Response[HttpErrorResponse | HttpExecutionResponse]:
+    """Partially update execution
 
-     Update task information and create history record
+     Partially update an execution (only provided fields are updated)
 
     Args:
-        task_id (str):
-        body (HttpTaskUpdateRequest):
+        execution_id (str):
+        body (HttpPatchExecutionRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HttpErrorResponse | HttpTaskUpdateResponse]
+        Response[HttpErrorResponse | HttpExecutionResponse]
     """
 
     kwargs = _get_kwargs(
+        execution_id=execution_id,
         body=body,
-        task_id=task_id,
     )
 
     response = client.get_httpx_client().request(
@@ -113,59 +109,59 @@ def sync_detailed(
 
 
 def sync(
+    execution_id: str,
     *,
     client: AuthenticatedClient | Client,
-    body: HttpTaskUpdateRequest,
-    task_id: str,
-) -> HttpErrorResponse | HttpTaskUpdateResponse | None:
-    """Update task
+    body: HttpPatchExecutionRequest,
+) -> HttpErrorResponse | HttpExecutionResponse | None:
+    """Partially update execution
 
-     Update task information and create history record
+     Partially update an execution (only provided fields are updated)
 
     Args:
-        task_id (str):
-        body (HttpTaskUpdateRequest):
+        execution_id (str):
+        body (HttpPatchExecutionRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HttpErrorResponse | HttpTaskUpdateResponse
+        HttpErrorResponse | HttpExecutionResponse
     """
 
     return sync_detailed(
+        execution_id=execution_id,
         client=client,
         body=body,
-        task_id=task_id,
     ).parsed
 
 
 async def asyncio_detailed(
+    execution_id: str,
     *,
     client: AuthenticatedClient | Client,
-    body: HttpTaskUpdateRequest,
-    task_id: str,
-) -> Response[HttpErrorResponse | HttpTaskUpdateResponse]:
-    """Update task
+    body: HttpPatchExecutionRequest,
+) -> Response[HttpErrorResponse | HttpExecutionResponse]:
+    """Partially update execution
 
-     Update task information and create history record
+     Partially update an execution (only provided fields are updated)
 
     Args:
-        task_id (str):
-        body (HttpTaskUpdateRequest):
+        execution_id (str):
+        body (HttpPatchExecutionRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HttpErrorResponse | HttpTaskUpdateResponse]
+        Response[HttpErrorResponse | HttpExecutionResponse]
     """
 
     kwargs = _get_kwargs(
+        execution_id=execution_id,
         body=body,
-        task_id=task_id,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -174,31 +170,31 @@ async def asyncio_detailed(
 
 
 async def asyncio(
+    execution_id: str,
     *,
     client: AuthenticatedClient | Client,
-    body: HttpTaskUpdateRequest,
-    task_id: str,
-) -> HttpErrorResponse | HttpTaskUpdateResponse | None:
-    """Update task
+    body: HttpPatchExecutionRequest,
+) -> HttpErrorResponse | HttpExecutionResponse | None:
+    """Partially update execution
 
-     Update task information and create history record
+     Partially update an execution (only provided fields are updated)
 
     Args:
-        task_id (str):
-        body (HttpTaskUpdateRequest):
+        execution_id (str):
+        body (HttpPatchExecutionRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HttpErrorResponse | HttpTaskUpdateResponse
+        HttpErrorResponse | HttpExecutionResponse
     """
 
     return (
         await asyncio_detailed(
+            execution_id=execution_id,
             client=client,
             body=body,
-            task_id=task_id,
         )
     ).parsed

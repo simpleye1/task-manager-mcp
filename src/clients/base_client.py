@@ -32,7 +32,8 @@ class TaskManagerClientBase(ABC):
         self, 
         execution_id: str, 
         step_name: str,
-        message: Optional[str] = None
+        message: Optional[str] = None,
+        status: Optional[str] = None
     ) -> Dict[str, Any]:
         """Create a new step for an execution
         
@@ -40,6 +41,7 @@ class TaskManagerClientBase(ABC):
             execution_id: Execution identifier
             step_name: Name of the step
             message: Optional message for the step
+            status: Optional initial status (default: "running")
             
         Returns:
             Dict with 'success' bool and step data or 'error'

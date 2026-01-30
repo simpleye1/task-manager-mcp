@@ -5,17 +5,22 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.get_api_tasks_status import GetApiTasksStatus
+from ...models.get_api_executions_status import GetApiExecutionsStatus
 from ...models.http_error_response import HttpErrorResponse
-from ...models.http_tasks_response import HttpTasksResponse
+from ...models.http_executions_response import HttpExecutionsResponse
 from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     *,
-    status: GetApiTasksStatus | Unset = UNSET,
+    task_id: str | Unset = UNSET,
+    status: GetApiExecutionsStatus | Unset = UNSET,
+    page: int | Unset = 1,
+    limit: int | Unset = 20,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
+
+    params["task-id"] = task_id
 
     json_status: str | Unset = UNSET
     if not isinstance(status, Unset):
@@ -23,11 +28,15 @@ def _get_kwargs(
 
     params["status"] = json_status
 
+    params["page"] = page
+
+    params["limit"] = limit
+
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/api/tasks",
+        "url": "/api/executions",
         "params": params,
     }
 
@@ -36,9 +45,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> HttpErrorResponse | HttpTasksResponse | None:
+) -> HttpErrorResponse | HttpExecutionsResponse | None:
     if response.status_code == 200:
-        response_200 = HttpTasksResponse.from_dict(response.json())
+        response_200 = HttpExecutionsResponse.from_dict(response.json())
 
         return response_200
 
@@ -60,7 +69,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[HttpErrorResponse | HttpTasksResponse]:
+) -> Response[HttpErrorResponse | HttpExecutionsResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -72,25 +81,34 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> Response[HttpErrorResponse | HttpTasksResponse]:
-    """List all tasks
+    task_id: str | Unset = UNSET,
+    status: GetApiExecutionsStatus | Unset = UNSET,
+    page: int | Unset = 1,
+    limit: int | Unset = 20,
+) -> Response[HttpErrorResponse | HttpExecutionsResponse]:
+    """Query executions
 
-     Get a list of all tasks, optionally filtered by status
+     Query executions by task-id and status with pagination
 
     Args:
-        status (GetApiTasksStatus | Unset):
+        task_id (str | Unset):
+        status (GetApiExecutionsStatus | Unset):
+        page (int | Unset):  Default: 1.
+        limit (int | Unset):  Default: 20.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HttpErrorResponse | HttpTasksResponse]
+        Response[HttpErrorResponse | HttpExecutionsResponse]
     """
 
     kwargs = _get_kwargs(
+        task_id=task_id,
         status=status,
+        page=page,
+        limit=limit,
     )
 
     response = client.get_httpx_client().request(
@@ -103,51 +121,69 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> HttpErrorResponse | HttpTasksResponse | None:
-    """List all tasks
+    task_id: str | Unset = UNSET,
+    status: GetApiExecutionsStatus | Unset = UNSET,
+    page: int | Unset = 1,
+    limit: int | Unset = 20,
+) -> HttpErrorResponse | HttpExecutionsResponse | None:
+    """Query executions
 
-     Get a list of all tasks, optionally filtered by status
+     Query executions by task-id and status with pagination
 
     Args:
-        status (GetApiTasksStatus | Unset):
+        task_id (str | Unset):
+        status (GetApiExecutionsStatus | Unset):
+        page (int | Unset):  Default: 1.
+        limit (int | Unset):  Default: 20.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HttpErrorResponse | HttpTasksResponse
+        HttpErrorResponse | HttpExecutionsResponse
     """
 
     return sync_detailed(
         client=client,
+        task_id=task_id,
         status=status,
+        page=page,
+        limit=limit,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> Response[HttpErrorResponse | HttpTasksResponse]:
-    """List all tasks
+    task_id: str | Unset = UNSET,
+    status: GetApiExecutionsStatus | Unset = UNSET,
+    page: int | Unset = 1,
+    limit: int | Unset = 20,
+) -> Response[HttpErrorResponse | HttpExecutionsResponse]:
+    """Query executions
 
-     Get a list of all tasks, optionally filtered by status
+     Query executions by task-id and status with pagination
 
     Args:
-        status (GetApiTasksStatus | Unset):
+        task_id (str | Unset):
+        status (GetApiExecutionsStatus | Unset):
+        page (int | Unset):  Default: 1.
+        limit (int | Unset):  Default: 20.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HttpErrorResponse | HttpTasksResponse]
+        Response[HttpErrorResponse | HttpExecutionsResponse]
     """
 
     kwargs = _get_kwargs(
+        task_id=task_id,
         status=status,
+        page=page,
+        limit=limit,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -158,26 +194,35 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> HttpErrorResponse | HttpTasksResponse | None:
-    """List all tasks
+    task_id: str | Unset = UNSET,
+    status: GetApiExecutionsStatus | Unset = UNSET,
+    page: int | Unset = 1,
+    limit: int | Unset = 20,
+) -> HttpErrorResponse | HttpExecutionsResponse | None:
+    """Query executions
 
-     Get a list of all tasks, optionally filtered by status
+     Query executions by task-id and status with pagination
 
     Args:
-        status (GetApiTasksStatus | Unset):
+        task_id (str | Unset):
+        status (GetApiExecutionsStatus | Unset):
+        page (int | Unset):  Default: 1.
+        limit (int | Unset):  Default: 20.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HttpErrorResponse | HttpTasksResponse
+        HttpErrorResponse | HttpExecutionsResponse
     """
 
     return (
         await asyncio_detailed(
             client=client,
+            task_id=task_id,
             status=status,
+            page=page,
+            limit=limit,
         )
     ).parsed

@@ -41,7 +41,8 @@ class MockTaskManagerClient(TaskManagerClientBase):
         self, 
         execution_id: str, 
         step_name: str,
-        message: Optional[str] = None
+        message: Optional[str] = None,
+        status: Optional[str] = None
     ) -> Dict[str, Any]:
         """Create a new step for an execution"""
         step_id = str(uuid.uuid4())[:8]
@@ -50,7 +51,7 @@ class MockTaskManagerClient(TaskManagerClientBase):
             "step_id": step_id,
             "execution_id": execution_id,
             "step_name": step_name,
-            "status": "running",
+            "status": status if status else "running",
             "message": message,
             "started_at": datetime.now(timezone.utc).isoformat()
         }

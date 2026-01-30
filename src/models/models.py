@@ -28,6 +28,7 @@ class StepCreate:
     """Step creation data structure"""
     step_name: str
     message: Optional[str] = None
+    status: Optional[str] = None
 
 
 @dataclass

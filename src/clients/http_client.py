@@ -68,12 +68,15 @@ class HttpTaskManagerClient(TaskManagerClientBase):
         self, 
         execution_id: str, 
         step_name: str,
-        message: Optional[str] = None
+        message: Optional[str] = None,
+        status: Optional[str] = None
     ) -> Dict[str, Any]:
         """Create a new step for an execution"""
         body = {"step_name": step_name}
         if message is not None:
             body["message"] = message
+        if status is not None:
+            body["status"] = status
         
         return self._make_request(
             "POST",

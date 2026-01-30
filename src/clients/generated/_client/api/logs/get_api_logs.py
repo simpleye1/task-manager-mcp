@@ -5,29 +5,24 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.get_api_tasks_status import GetApiTasksStatus
 from ...models.http_error_response import HttpErrorResponse
-from ...models.http_tasks_response import HttpTasksResponse
+from ...models.http_logs_response import HttpLogsResponse
 from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     *,
-    status: GetApiTasksStatus | Unset = UNSET,
+    lines: int | Unset = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
-    json_status: str | Unset = UNSET
-    if not isinstance(status, Unset):
-        json_status = status.value
-
-    params["status"] = json_status
+    params["lines"] = lines
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/api/tasks",
+        "url": "/api/logs",
         "params": params,
     }
 
@@ -36,9 +31,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> HttpErrorResponse | HttpTasksResponse | None:
+) -> HttpErrorResponse | HttpLogsResponse | None:
     if response.status_code == 200:
-        response_200 = HttpTasksResponse.from_dict(response.json())
+        response_200 = HttpLogsResponse.from_dict(response.json())
 
         return response_200
 
@@ -60,7 +55,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[HttpErrorResponse | HttpTasksResponse]:
+) -> Response[HttpErrorResponse | HttpLogsResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -72,25 +67,25 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> Response[HttpErrorResponse | HttpTasksResponse]:
-    """List all tasks
+    lines: int | Unset = UNSET,
+) -> Response[HttpErrorResponse | HttpLogsResponse]:
+    """Get task manager logs
 
-     Get a list of all tasks, optionally filtered by status
+     Retrieve task manager log entries with optional line limit
 
     Args:
-        status (GetApiTasksStatus | Unset):
+        lines (int | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HttpErrorResponse | HttpTasksResponse]
+        Response[HttpErrorResponse | HttpLogsResponse]
     """
 
     kwargs = _get_kwargs(
-        status=status,
+        lines=lines,
     )
 
     response = client.get_httpx_client().request(
@@ -103,51 +98,51 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> HttpErrorResponse | HttpTasksResponse | None:
-    """List all tasks
+    lines: int | Unset = UNSET,
+) -> HttpErrorResponse | HttpLogsResponse | None:
+    """Get task manager logs
 
-     Get a list of all tasks, optionally filtered by status
+     Retrieve task manager log entries with optional line limit
 
     Args:
-        status (GetApiTasksStatus | Unset):
+        lines (int | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HttpErrorResponse | HttpTasksResponse
+        HttpErrorResponse | HttpLogsResponse
     """
 
     return sync_detailed(
         client=client,
-        status=status,
+        lines=lines,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> Response[HttpErrorResponse | HttpTasksResponse]:
-    """List all tasks
+    lines: int | Unset = UNSET,
+) -> Response[HttpErrorResponse | HttpLogsResponse]:
+    """Get task manager logs
 
-     Get a list of all tasks, optionally filtered by status
+     Retrieve task manager log entries with optional line limit
 
     Args:
-        status (GetApiTasksStatus | Unset):
+        lines (int | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HttpErrorResponse | HttpTasksResponse]
+        Response[HttpErrorResponse | HttpLogsResponse]
     """
 
     kwargs = _get_kwargs(
-        status=status,
+        lines=lines,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -158,26 +153,26 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> HttpErrorResponse | HttpTasksResponse | None:
-    """List all tasks
+    lines: int | Unset = UNSET,
+) -> HttpErrorResponse | HttpLogsResponse | None:
+    """Get task manager logs
 
-     Get a list of all tasks, optionally filtered by status
+     Retrieve task manager log entries with optional line limit
 
     Args:
-        status (GetApiTasksStatus | Unset):
+        lines (int | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HttpErrorResponse | HttpTasksResponse
+        HttpErrorResponse | HttpLogsResponse
     """
 
     return (
         await asyncio_detailed(
             client=client,
-            status=status,
+            lines=lines,
         )
     ).parsed

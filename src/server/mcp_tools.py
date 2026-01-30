@@ -28,8 +28,8 @@ def update_execution_session(
     Update execution with session ID. Call this at the start to register your session.
     
     Args:
-        execution_id: The execution ID you are working on
-        session_id: Your agent session ID to associate with this execution
+        execution_id: The execution ID you are working on (get from NOVA_EXECUTION_ID env var)
+        session_id: Your agent session ID to associate with this execution (get from skill tool)
     
     Returns:
         Updated execution information
@@ -56,24 +56,33 @@ def update_execution_session(
 def create_step(
     execution_id: str,
     step_name: str,
-    message: Optional[str] = None
+    message: Optional[str] = None,
+    status: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Create a new step in an execution. The step starts with 'running' status.
+    Create a new step in an execution. The step starts with 'running' status by default.
     
     Args:
-        execution_id: The execution ID to create the step in
+        execution_id: The execution ID to create the step in (get from NOVA_EXECUTION_ID env var)
         step_name: Name of the step (e.g., "analyzing", "coding", "testing")
         message: Optional description of what this step will do
+        status: Optional initial status - "running", "completed", "failed", or "skipped" (default: "running")
     
     Returns:
         Created step information including step_id (save this for updates)
     """
+    if status and status not in {"running", "completed", "failed", "skipped"}:
+        return {
+            "success": False,
+            "error": f"Invalid status '{status}'. Must be one of: running, completed, failed, skipped"
+        }
+    
     try:
         result = task_client.create_step(
             execution_id=execution_id,
             step_name=step_name,
-            message=message
+            message=message,
+            status=status
         )
         
         if result.get("success"):
@@ -101,7 +110,7 @@ def update_step(
     Update an existing step's status and/or message.
     
     Args:
-        execution_id: The execution ID containing the step
+        execution_id: The execution ID containing the step (get from NOVA_EXECUTION_ID env var)
         step_id: The step ID to update (from create_step response)
         status: New status - "running", "completed", "failed", or "skipped"
         message: Updated message describing the outcome

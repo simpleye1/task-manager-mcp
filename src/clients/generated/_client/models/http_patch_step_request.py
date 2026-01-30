@@ -6,28 +6,52 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="HttpTaskInfoDetails")
+from ..types import UNSET, Unset
+
+T = TypeVar("T", bound="HttpPatchStepRequest")
 
 
 @_attrs_define
-class HttpTaskInfoDetails:
-    """ """
+class HttpPatchStepRequest:
+    """
+    Attributes:
+        message (str | Unset):
+        status (str | Unset): Optional, defaults to "running"
+    """
 
+    message: str | Unset = UNSET
+    status: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        message = self.message
+
+        status = self.status
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
+        field_dict.update({})
+        if message is not UNSET:
+            field_dict["message"] = message
+        if status is not UNSET:
+            field_dict["status"] = status
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        http_task_info_details = cls()
+        message = d.pop("message", UNSET)
 
-        http_task_info_details.additional_properties = d
-        return http_task_info_details
+        status = d.pop("status", UNSET)
+
+        http_patch_step_request = cls(
+            message=message,
+            status=status,
+        )
+
+        http_patch_step_request.additional_properties = d
+        return http_patch_step_request
 
     @property
     def additional_keys(self) -> list[str]:

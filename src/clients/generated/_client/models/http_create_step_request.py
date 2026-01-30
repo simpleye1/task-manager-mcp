@@ -8,59 +8,61 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="HttpTaskUpdateResponse")
+T = TypeVar("T", bound="HttpCreateStepRequest")
 
 
 @_attrs_define
-class HttpTaskUpdateResponse:
+class HttpCreateStepRequest:
     """
     Attributes:
+        step_name (str):
         message (str | Unset):
-        success (bool | Unset):
-        task_id (str | Unset):
+        status (str | Unset): Optional, defaults to "running"
     """
 
+    step_name: str
     message: str | Unset = UNSET
-    success: bool | Unset = UNSET
-    task_id: str | Unset = UNSET
+    status: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        step_name = self.step_name
+
         message = self.message
 
-        success = self.success
-
-        task_id = self.task_id
+        status = self.status
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
+        field_dict.update(
+            {
+                "step_name": step_name,
+            }
+        )
         if message is not UNSET:
             field_dict["message"] = message
-        if success is not UNSET:
-            field_dict["success"] = success
-        if task_id is not UNSET:
-            field_dict["task_id"] = task_id
+        if status is not UNSET:
+            field_dict["status"] = status
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
+        step_name = d.pop("step_name")
+
         message = d.pop("message", UNSET)
 
-        success = d.pop("success", UNSET)
+        status = d.pop("status", UNSET)
 
-        task_id = d.pop("task_id", UNSET)
-
-        http_task_update_response = cls(
+        http_create_step_request = cls(
+            step_name=step_name,
             message=message,
-            success=success,
-            task_id=task_id,
+            status=status,
         )
 
-        http_task_update_response.additional_properties = d
-        return http_task_update_response
+        http_create_step_request.additional_properties = d
+        return http_create_step_request
 
     @property
     def additional_keys(self) -> list[str]:

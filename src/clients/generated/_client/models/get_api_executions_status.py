@@ -1,10 +1,11 @@
 from enum import Enum
 
 
-class HttpTaskUpdateRequestStatus(str, Enum):
+class GetApiExecutionsStatus(str, Enum):
+    COMPLETED = "completed"
     FAILED = "failed"
+    REJECTED = "rejected"
     RUNNING = "running"
-    SUCCESS = "success"
 
     def __str__(self) -> str:
         return str(self.value)

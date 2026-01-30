@@ -5,30 +5,15 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.get_api_tasks_status import GetApiTasksStatus
+from ...models.http_dashboard_health_response import HttpDashboardHealthResponse
 from ...models.http_error_response import HttpErrorResponse
-from ...models.http_tasks_response import HttpTasksResponse
-from ...types import UNSET, Response, Unset
+from ...types import Response
 
 
-def _get_kwargs(
-    *,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> dict[str, Any]:
-    params: dict[str, Any] = {}
-
-    json_status: str | Unset = UNSET
-    if not isinstance(status, Unset):
-        json_status = status.value
-
-    params["status"] = json_status
-
-    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
-
+def _get_kwargs() -> dict[str, Any]:
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/api/tasks",
-        "params": params,
+        "url": "/api/dashboard/health",
     }
 
     return _kwargs
@@ -36,16 +21,11 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> HttpErrorResponse | HttpTasksResponse | None:
+) -> HttpDashboardHealthResponse | HttpErrorResponse | None:
     if response.status_code == 200:
-        response_200 = HttpTasksResponse.from_dict(response.json())
+        response_200 = HttpDashboardHealthResponse.from_dict(response.json())
 
         return response_200
-
-    if response.status_code == 400:
-        response_400 = HttpErrorResponse.from_dict(response.json())
-
-        return response_400
 
     if response.status_code == 500:
         response_500 = HttpErrorResponse.from_dict(response.json())
@@ -60,7 +40,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[HttpErrorResponse | HttpTasksResponse]:
+) -> Response[HttpDashboardHealthResponse | HttpErrorResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -72,26 +52,20 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> Response[HttpErrorResponse | HttpTasksResponse]:
-    """List all tasks
+) -> Response[HttpDashboardHealthResponse | HttpErrorResponse]:
+    """Dashboard health check with system metrics
 
-     Get a list of all tasks, optionally filtered by status
-
-    Args:
-        status (GetApiTasksStatus | Unset):
+     Get system health including CPU, memory usage, and API latency
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HttpErrorResponse | HttpTasksResponse]
+        Response[HttpDashboardHealthResponse | HttpErrorResponse]
     """
 
-    kwargs = _get_kwargs(
-        status=status,
-    )
+    kwargs = _get_kwargs()
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -103,52 +77,41 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> HttpErrorResponse | HttpTasksResponse | None:
-    """List all tasks
+) -> HttpDashboardHealthResponse | HttpErrorResponse | None:
+    """Dashboard health check with system metrics
 
-     Get a list of all tasks, optionally filtered by status
-
-    Args:
-        status (GetApiTasksStatus | Unset):
+     Get system health including CPU, memory usage, and API latency
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HttpErrorResponse | HttpTasksResponse
+        HttpDashboardHealthResponse | HttpErrorResponse
     """
 
     return sync_detailed(
         client=client,
-        status=status,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> Response[HttpErrorResponse | HttpTasksResponse]:
-    """List all tasks
+) -> Response[HttpDashboardHealthResponse | HttpErrorResponse]:
+    """Dashboard health check with system metrics
 
-     Get a list of all tasks, optionally filtered by status
-
-    Args:
-        status (GetApiTasksStatus | Unset):
+     Get system health including CPU, memory usage, and API latency
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HttpErrorResponse | HttpTasksResponse]
+        Response[HttpDashboardHealthResponse | HttpErrorResponse]
     """
 
-    kwargs = _get_kwargs(
-        status=status,
-    )
+    kwargs = _get_kwargs()
 
     response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -158,26 +121,21 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> HttpErrorResponse | HttpTasksResponse | None:
-    """List all tasks
+) -> HttpDashboardHealthResponse | HttpErrorResponse | None:
+    """Dashboard health check with system metrics
 
-     Get a list of all tasks, optionally filtered by status
-
-    Args:
-        status (GetApiTasksStatus | Unset):
+     Get system health including CPU, memory usage, and API latency
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HttpErrorResponse | HttpTasksResponse
+        HttpDashboardHealthResponse | HttpErrorResponse
     """
 
     return (
         await asyncio_detailed(
             client=client,
-            status=status,
         )
     ).parsed

@@ -6,28 +6,52 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="HttpTaskHistoryEntryDetails")
+from ..types import UNSET, Unset
+
+T = TypeVar("T", bound="HttpPatchExecutionRequest")
 
 
 @_attrs_define
-class HttpTaskHistoryEntryDetails:
-    """ """
+class HttpPatchExecutionRequest:
+    """
+    Attributes:
+        session_id (str | Unset):
+        worktree_path (str | Unset):
+    """
 
+    session_id: str | Unset = UNSET
+    worktree_path: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        session_id = self.session_id
+
+        worktree_path = self.worktree_path
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
+        field_dict.update({})
+        if session_id is not UNSET:
+            field_dict["session_id"] = session_id
+        if worktree_path is not UNSET:
+            field_dict["worktree_path"] = worktree_path
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        http_task_history_entry_details = cls()
+        session_id = d.pop("session_id", UNSET)
 
-        http_task_history_entry_details.additional_properties = d
-        return http_task_history_entry_details
+        worktree_path = d.pop("worktree_path", UNSET)
+
+        http_patch_execution_request = cls(
+            session_id=session_id,
+            worktree_path=worktree_path,
+        )
+
+        http_patch_execution_request.additional_properties = d
+        return http_patch_execution_request
 
     @property
     def additional_keys(self) -> list[str]:

@@ -1,47 +1,46 @@
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...models.http_create_step_request import HttpCreateStepRequest
 from ...models.http_error_response import HttpErrorResponse
-from ...models.http_task_history_response import HttpTaskHistoryResponse
-from ...types import UNSET, Response, Unset
+from ...models.http_step_response import HttpStepResponse
+from ...types import Response
 
 
 def _get_kwargs(
+    execution_id: str,
     *,
-    task_id: str,
-    limit: int | Unset = 100,
-    offset: int | Unset = 0,
+    body: HttpCreateStepRequest,
 ) -> dict[str, Any]:
-    params: dict[str, Any] = {}
-
-    params["task_id"] = task_id
-
-    params["limit"] = limit
-
-    params["offset"] = offset
-
-    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+    headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
-        "method": "get",
-        "url": "/api/tasks/history",
-        "params": params,
+        "method": "post",
+        "url": "/api/executions/{execution_id}/steps".format(
+            execution_id=quote(str(execution_id), safe=""),
+        ),
     }
 
+    _kwargs["json"] = body.to_dict()
+
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
     return _kwargs
 
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> HttpErrorResponse | HttpTaskHistoryResponse | None:
-    if response.status_code == 200:
-        response_200 = HttpTaskHistoryResponse.from_dict(response.json())
+) -> HttpErrorResponse | HttpStepResponse | None:
+    if response.status_code == 201:
+        response_201 = HttpStepResponse.from_dict(response.json())
 
-        return response_200
+        return response_201
 
     if response.status_code == 400:
         response_400 = HttpErrorResponse.from_dict(response.json())
@@ -66,7 +65,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[HttpErrorResponse | HttpTaskHistoryResponse]:
+) -> Response[HttpErrorResponse | HttpStepResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -76,33 +75,30 @@ def _build_response(
 
 
 def sync_detailed(
+    execution_id: str,
     *,
     client: AuthenticatedClient | Client,
-    task_id: str,
-    limit: int | Unset = 100,
-    offset: int | Unset = 0,
-) -> Response[HttpErrorResponse | HttpTaskHistoryResponse]:
-    """Get task history
+    body: HttpCreateStepRequest,
+) -> Response[HttpErrorResponse | HttpStepResponse]:
+    """Create execution step
 
-     Get complete task history including status changes and logs
+     Create a new execution step for the specified execution
 
     Args:
-        task_id (str):
-        limit (int | Unset):  Default: 100.
-        offset (int | Unset):  Default: 0.
+        execution_id (str):
+        body (HttpCreateStepRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HttpErrorResponse | HttpTaskHistoryResponse]
+        Response[HttpErrorResponse | HttpStepResponse]
     """
 
     kwargs = _get_kwargs(
-        task_id=task_id,
-        limit=limit,
-        offset=offset,
+        execution_id=execution_id,
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -113,65 +109,59 @@ def sync_detailed(
 
 
 def sync(
+    execution_id: str,
     *,
     client: AuthenticatedClient | Client,
-    task_id: str,
-    limit: int | Unset = 100,
-    offset: int | Unset = 0,
-) -> HttpErrorResponse | HttpTaskHistoryResponse | None:
-    """Get task history
+    body: HttpCreateStepRequest,
+) -> HttpErrorResponse | HttpStepResponse | None:
+    """Create execution step
 
-     Get complete task history including status changes and logs
+     Create a new execution step for the specified execution
 
     Args:
-        task_id (str):
-        limit (int | Unset):  Default: 100.
-        offset (int | Unset):  Default: 0.
+        execution_id (str):
+        body (HttpCreateStepRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HttpErrorResponse | HttpTaskHistoryResponse
+        HttpErrorResponse | HttpStepResponse
     """
 
     return sync_detailed(
+        execution_id=execution_id,
         client=client,
-        task_id=task_id,
-        limit=limit,
-        offset=offset,
+        body=body,
     ).parsed
 
 
 async def asyncio_detailed(
+    execution_id: str,
     *,
     client: AuthenticatedClient | Client,
-    task_id: str,
-    limit: int | Unset = 100,
-    offset: int | Unset = 0,
-) -> Response[HttpErrorResponse | HttpTaskHistoryResponse]:
-    """Get task history
+    body: HttpCreateStepRequest,
+) -> Response[HttpErrorResponse | HttpStepResponse]:
+    """Create execution step
 
-     Get complete task history including status changes and logs
+     Create a new execution step for the specified execution
 
     Args:
-        task_id (str):
-        limit (int | Unset):  Default: 100.
-        offset (int | Unset):  Default: 0.
+        execution_id (str):
+        body (HttpCreateStepRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HttpErrorResponse | HttpTaskHistoryResponse]
+        Response[HttpErrorResponse | HttpStepResponse]
     """
 
     kwargs = _get_kwargs(
-        task_id=task_id,
-        limit=limit,
-        offset=offset,
+        execution_id=execution_id,
+        body=body,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -180,34 +170,31 @@ async def asyncio_detailed(
 
 
 async def asyncio(
+    execution_id: str,
     *,
     client: AuthenticatedClient | Client,
-    task_id: str,
-    limit: int | Unset = 100,
-    offset: int | Unset = 0,
-) -> HttpErrorResponse | HttpTaskHistoryResponse | None:
-    """Get task history
+    body: HttpCreateStepRequest,
+) -> HttpErrorResponse | HttpStepResponse | None:
+    """Create execution step
 
-     Get complete task history including status changes and logs
+     Create a new execution step for the specified execution
 
     Args:
-        task_id (str):
-        limit (int | Unset):  Default: 100.
-        offset (int | Unset):  Default: 0.
+        execution_id (str):
+        body (HttpCreateStepRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HttpErrorResponse | HttpTaskHistoryResponse
+        HttpErrorResponse | HttpStepResponse
     """
 
     return (
         await asyncio_detailed(
+            execution_id=execution_id,
             client=client,
-            task_id=task_id,
-            limit=limit,
-            offset=offset,
+            body=body,
         )
     ).parsed

@@ -9,7 +9,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.http_task_info_details import HttpTaskInfoDetails
+    from ..models.http_jira_ticket_info import HttpJIRATicketInfo
 
 
 T = TypeVar("T", bound="HttpTaskInfo")
@@ -20,24 +20,20 @@ class HttpTaskInfo:
     """
     Attributes:
         created_at (str | Unset):
-        current_action (str | Unset):
-        details (HttpTaskInfoDetails | Unset):
-        jira_ticket (str | Unset):
-        message (str | Unset):
-        progress_percentage (float | Unset):
-        session_id (str | Unset):
+        failure_reason (str | Unset):
+        jira_info (HttpJIRATicketInfo | Unset):
+        jira_ticket_id (str | Unset):
+        retry_count (int | Unset):
         status (str | Unset):
         task_id (str | Unset):
         updated_at (str | Unset):
     """
 
     created_at: str | Unset = UNSET
-    current_action: str | Unset = UNSET
-    details: HttpTaskInfoDetails | Unset = UNSET
-    jira_ticket: str | Unset = UNSET
-    message: str | Unset = UNSET
-    progress_percentage: float | Unset = UNSET
-    session_id: str | Unset = UNSET
+    failure_reason: str | Unset = UNSET
+    jira_info: HttpJIRATicketInfo | Unset = UNSET
+    jira_ticket_id: str | Unset = UNSET
+    retry_count: int | Unset = UNSET
     status: str | Unset = UNSET
     task_id: str | Unset = UNSET
     updated_at: str | Unset = UNSET
@@ -46,19 +42,15 @@ class HttpTaskInfo:
     def to_dict(self) -> dict[str, Any]:
         created_at = self.created_at
 
-        current_action = self.current_action
+        failure_reason = self.failure_reason
 
-        details: dict[str, Any] | Unset = UNSET
-        if not isinstance(self.details, Unset):
-            details = self.details.to_dict()
+        jira_info: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.jira_info, Unset):
+            jira_info = self.jira_info.to_dict()
 
-        jira_ticket = self.jira_ticket
+        jira_ticket_id = self.jira_ticket_id
 
-        message = self.message
-
-        progress_percentage = self.progress_percentage
-
-        session_id = self.session_id
+        retry_count = self.retry_count
 
         status = self.status
 
@@ -71,18 +63,14 @@ class HttpTaskInfo:
         field_dict.update({})
         if created_at is not UNSET:
             field_dict["created_at"] = created_at
-        if current_action is not UNSET:
-            field_dict["current_action"] = current_action
-        if details is not UNSET:
-            field_dict["details"] = details
-        if jira_ticket is not UNSET:
-            field_dict["jira_ticket"] = jira_ticket
-        if message is not UNSET:
-            field_dict["message"] = message
-        if progress_percentage is not UNSET:
-            field_dict["progress_percentage"] = progress_percentage
-        if session_id is not UNSET:
-            field_dict["session_id"] = session_id
+        if failure_reason is not UNSET:
+            field_dict["failure_reason"] = failure_reason
+        if jira_info is not UNSET:
+            field_dict["jira_info"] = jira_info
+        if jira_ticket_id is not UNSET:
+            field_dict["jira_ticket_id"] = jira_ticket_id
+        if retry_count is not UNSET:
+            field_dict["retry_count"] = retry_count
         if status is not UNSET:
             field_dict["status"] = status
         if task_id is not UNSET:
@@ -94,27 +82,23 @@ class HttpTaskInfo:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.http_task_info_details import HttpTaskInfoDetails
+        from ..models.http_jira_ticket_info import HttpJIRATicketInfo
 
         d = dict(src_dict)
         created_at = d.pop("created_at", UNSET)
 
-        current_action = d.pop("current_action", UNSET)
+        failure_reason = d.pop("failure_reason", UNSET)
 
-        _details = d.pop("details", UNSET)
-        details: HttpTaskInfoDetails | Unset
-        if isinstance(_details, Unset):
-            details = UNSET
+        _jira_info = d.pop("jira_info", UNSET)
+        jira_info: HttpJIRATicketInfo | Unset
+        if isinstance(_jira_info, Unset):
+            jira_info = UNSET
         else:
-            details = HttpTaskInfoDetails.from_dict(_details)
+            jira_info = HttpJIRATicketInfo.from_dict(_jira_info)
 
-        jira_ticket = d.pop("jira_ticket", UNSET)
+        jira_ticket_id = d.pop("jira_ticket_id", UNSET)
 
-        message = d.pop("message", UNSET)
-
-        progress_percentage = d.pop("progress_percentage", UNSET)
-
-        session_id = d.pop("session_id", UNSET)
+        retry_count = d.pop("retry_count", UNSET)
 
         status = d.pop("status", UNSET)
 
@@ -124,12 +108,10 @@ class HttpTaskInfo:
 
         http_task_info = cls(
             created_at=created_at,
-            current_action=current_action,
-            details=details,
-            jira_ticket=jira_ticket,
-            message=message,
-            progress_percentage=progress_percentage,
-            session_id=session_id,
+            failure_reason=failure_reason,
+            jira_info=jira_info,
+            jira_ticket_id=jira_ticket_id,
+            retry_count=retry_count,
             status=status,
             task_id=task_id,
             updated_at=updated_at,

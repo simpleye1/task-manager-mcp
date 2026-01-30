@@ -9,6 +9,7 @@ components:
       - NovaStatusFailed
       - NovaStatusRejected
     domain.StepStatus:
+      description: Optional, defaults to "running"
       type: string
       x-enum-varnames:
       - StepStatusRunning
@@ -39,6 +40,8 @@ components:
       properties:
         message:
           type: string
+        status:
+          $ref: '#/components/schemas/domain.StepStatus'
         step_name:
           type: string
       required:
@@ -188,6 +191,7 @@ components:
         message:
           type: string
         status:
+          description: Optional, defaults to "running"
           type: string
           x-enum-varnames:
           - StepStatusRunning
@@ -206,7 +210,13 @@ components:
         started_at:
           type: string
         status:
-          $ref: '#/components/schemas/domain.StepStatus'
+          description: Optional, defaults to "running"
+          type: string
+          x-enum-varnames:
+          - StepStatusRunning
+          - StepStatusCompleted
+          - StepStatusFailed
+          - StepStatusSkipped
         step_id:
           type: string
         step_name:

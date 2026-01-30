@@ -1,44 +1,46 @@
 from http import HTTPStatus
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.get_api_tasks_status import GetApiTasksStatus
 from ...models.http_error_response import HttpErrorResponse
-from ...models.http_tasks_response import HttpTasksResponse
-from ...types import UNSET, Response, Unset
+from ...models.http_patch_step_request import HttpPatchStepRequest
+from ...models.http_step_response import HttpStepResponse
+from ...types import Response
 
 
 def _get_kwargs(
+    execution_id: str,
+    step_id: str,
     *,
-    status: GetApiTasksStatus | Unset = UNSET,
+    body: HttpPatchStepRequest,
 ) -> dict[str, Any]:
-    params: dict[str, Any] = {}
-
-    json_status: str | Unset = UNSET
-    if not isinstance(status, Unset):
-        json_status = status.value
-
-    params["status"] = json_status
-
-    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+    headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
-        "method": "get",
-        "url": "/api/tasks",
-        "params": params,
+        "method": "patch",
+        "url": "/api/executions/{execution_id}/steps/{step_id}".format(
+            execution_id=quote(str(execution_id), safe=""),
+            step_id=quote(str(step_id), safe=""),
+        ),
     }
 
+    _kwargs["json"] = body.to_dict()
+
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
     return _kwargs
 
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> HttpErrorResponse | HttpTasksResponse | None:
+) -> HttpErrorResponse | HttpStepResponse | None:
     if response.status_code == 200:
-        response_200 = HttpTasksResponse.from_dict(response.json())
+        response_200 = HttpStepResponse.from_dict(response.json())
 
         return response_200
 
@@ -46,6 +48,11 @@ def _parse_response(
         response_400 = HttpErrorResponse.from_dict(response.json())
 
         return response_400
+
+    if response.status_code == 404:
+        response_404 = HttpErrorResponse.from_dict(response.json())
+
+        return response_404
 
     if response.status_code == 500:
         response_500 = HttpErrorResponse.from_dict(response.json())
@@ -60,7 +67,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[HttpErrorResponse | HttpTasksResponse]:
+) -> Response[HttpErrorResponse | HttpStepResponse]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -70,27 +77,33 @@ def _build_response(
 
 
 def sync_detailed(
+    execution_id: str,
+    step_id: str,
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> Response[HttpErrorResponse | HttpTasksResponse]:
-    """List all tasks
+    body: HttpPatchStepRequest,
+) -> Response[HttpErrorResponse | HttpStepResponse]:
+    """Partially update step
 
-     Get a list of all tasks, optionally filtered by status
+     Partially update an execution step (only provided fields are updated)
 
     Args:
-        status (GetApiTasksStatus | Unset):
+        execution_id (str):
+        step_id (str):
+        body (HttpPatchStepRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HttpErrorResponse | HttpTasksResponse]
+        Response[HttpErrorResponse | HttpStepResponse]
     """
 
     kwargs = _get_kwargs(
-        status=status,
+        execution_id=execution_id,
+        step_id=step_id,
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -101,53 +114,65 @@ def sync_detailed(
 
 
 def sync(
+    execution_id: str,
+    step_id: str,
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> HttpErrorResponse | HttpTasksResponse | None:
-    """List all tasks
+    body: HttpPatchStepRequest,
+) -> HttpErrorResponse | HttpStepResponse | None:
+    """Partially update step
 
-     Get a list of all tasks, optionally filtered by status
+     Partially update an execution step (only provided fields are updated)
 
     Args:
-        status (GetApiTasksStatus | Unset):
+        execution_id (str):
+        step_id (str):
+        body (HttpPatchStepRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HttpErrorResponse | HttpTasksResponse
+        HttpErrorResponse | HttpStepResponse
     """
 
     return sync_detailed(
+        execution_id=execution_id,
+        step_id=step_id,
         client=client,
-        status=status,
+        body=body,
     ).parsed
 
 
 async def asyncio_detailed(
+    execution_id: str,
+    step_id: str,
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> Response[HttpErrorResponse | HttpTasksResponse]:
-    """List all tasks
+    body: HttpPatchStepRequest,
+) -> Response[HttpErrorResponse | HttpStepResponse]:
+    """Partially update step
 
-     Get a list of all tasks, optionally filtered by status
+     Partially update an execution step (only provided fields are updated)
 
     Args:
-        status (GetApiTasksStatus | Unset):
+        execution_id (str):
+        step_id (str):
+        body (HttpPatchStepRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[HttpErrorResponse | HttpTasksResponse]
+        Response[HttpErrorResponse | HttpStepResponse]
     """
 
     kwargs = _get_kwargs(
-        status=status,
+        execution_id=execution_id,
+        step_id=step_id,
+        body=body,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -156,28 +181,34 @@ async def asyncio_detailed(
 
 
 async def asyncio(
+    execution_id: str,
+    step_id: str,
     *,
     client: AuthenticatedClient | Client,
-    status: GetApiTasksStatus | Unset = UNSET,
-) -> HttpErrorResponse | HttpTasksResponse | None:
-    """List all tasks
+    body: HttpPatchStepRequest,
+) -> HttpErrorResponse | HttpStepResponse | None:
+    """Partially update step
 
-     Get a list of all tasks, optionally filtered by status
+     Partially update an execution step (only provided fields are updated)
 
     Args:
-        status (GetApiTasksStatus | Unset):
+        execution_id (str):
+        step_id (str):
+        body (HttpPatchStepRequest):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        HttpErrorResponse | HttpTasksResponse
+        HttpErrorResponse | HttpStepResponse
     """
 
     return (
         await asyncio_detailed(
+            execution_id=execution_id,
+            step_id=step_id,
             client=client,
-            status=status,
+            body=body,
         )
     ).parsed
