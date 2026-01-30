@@ -32,6 +32,25 @@ inclusion: always
 
 ## Git Commit 规范
 
+### Pre-commit Hook
+
+项目配置了 pre-commit hook，会在每次 commit 前自动运行测试：
+
+```bash
+# Hook 位置
+.git/hooks/pre-commit
+
+# 自动执行
+make test
+```
+
+如果测试失败，commit 会被阻止。修复测试后再次尝试提交。
+
+**跳过 hook（不推荐）**:
+```bash
+git commit --no-verify -m "your message"
+```
+
 ### Commit Message 格式
 
 使用简洁的一句话格式，遵循 Conventional Commits 规范：
