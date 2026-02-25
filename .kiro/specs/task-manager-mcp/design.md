@@ -1,12 +1,12 @@
-# 设计文档
+# Design Document
 
-## 概述
+## Overview
 
-Nova Task Manager MCP 服务器采用分层架构设计,将 MCP 工具层、客户端抽象层和具体实现层分离。通过策略模式实现客户端的可替换性,支持在生产环境使用 HTTP 客户端,在测试环境使用 Mock 客户端。
+Nova Task Manager MCP Server adopts a layered architecture design that separates the MCP tool layer, client abstraction layer, and concrete implementation layer. Through the strategy pattern, client replaceability is achieved, supporting HTTP client in production environments and Mock client in test environments.
 
-**重要说明：** 项目使用 `openapi-python-client` 从 `docs/swagger.yaml` 自动生成类型化的 API 客户端代码到 `src/clients/generated/` 目录。当 API 定义更新时,运行 `make regenerate` 重新生成客户端代码。
+**Important Note:** The project uses `openapi-python-client` to automatically generate typed API client code from `docs/swagger.yaml` to the `src/clients/generated/` directory. When the API definition is updated, run `make regenerate` to regenerate the client code.
 
-## 架构
+## Architecture
 
 ```mermaid
 graph TB
@@ -45,78 +45,78 @@ graph TB
     Base --> HTTP
     Base --> Mock
     
-    HTTP -.使用.-> Generated
-    Swagger -.生成.-> Generated
+    HTTP -.uses.-> Generated
+    Swagger -.generates.-> Generated
     Generated --> TM
     Mock --> TM
 ```
 
-### 层次说明
+### Layer Description
 
-1. **MCP Layer**: 基于 fastmcp 框架的工具定义层,负责接收 Agent 调用并返回结果
-2. **Client Layer**: 客户端抽象层,通过策略模式实现不同的后端通信方式
-   - **Generated API Client**: 从 swagger.yaml 自动生成的类型化客户端（位于 `src/clients/generated/`）
-   - **HttpTaskManagerClient**: 手写的 HTTP 客户端包装器,可选择性使用生成的客户端
-   - **MockTaskManagerClient**: 用于测试的内存模拟客户端
-3. **External**: 外部 Task Manager 服务和 API 定义
+1. **MCP Layer**: Tool definition layer based on the fastmcp framework, responsible for receiving Agent calls and returning results
+2. **Client Layer**: Client abstraction layer implementing different backend communication methods through the strategy pattern
+   - **Generated API Client**: Typed client automatically generated from swagger.yaml (located in `src/clients/generated/`)
+   - **HttpTaskManagerClient**: Hand-written HTTP client wrapper that optionally uses the generated client
+   - **MockTaskManagerClient**: In-memory mock client for testing
+3. **External**: External Task Manager service and API definition
 
-## 代码生成工作流
+## Code Generation Workflow
 
-项目使用 `openapi-python-client` 工具从 OpenAPI/Swagger 规范自动生成 Python 客户端代码：
+The project uses the `openapi-python-client` tool to automatically generate Python client code from OpenAPI/Swagger specifications:
 
-### 生成命令
+### Generation Commands
 
 ```bash
-# 重新生成客户端（清理 + 生成）
+# Regenerate client (clean + generate)
 make regenerate
 
-# 仅生成客户端
+# Generate client only
 make generate
 
-# 清理生成的代码
+# Clean generated code
 make clean
 ```
 
-### 生成的文件结构
+### Generated File Structure
 
 ```
 src/clients/generated/
 ├── _client/
-│   ├── api/              # API 端点函数
-│   │   ├── executions/   # Execution 相关 API
-│   │   ├── steps/        # Step 相关 API
-│   │   ├── health/       # 健康检查 API
+│   ├── api/              # API endpoint functions
+│   │   ├── executions/   # Execution-related APIs
+│   │   ├── steps/        # Step-related APIs
+│   │   ├── health/       # Health check API
 │   │   └── ...
-│   ├── models/           # 数据模型类
+│   ├── models/           # Data model classes
 │   │   ├── http_create_step_request.py
 │   │   ├── http_step_response.py
 │   │   └── ...
-│   ├── client.py         # 客户端基类
-│   └── types.py          # 类型定义
+│   ├── client.py         # Client base class
+│   └── types.py          # Type definitions
 ├── README.md
 └── pyproject.toml
 ```
 
-### 使用生成的客户端
+### Using the Generated Client
 
-生成的客户端提供了类型安全的 API 调用接口。例如：
+The generated client provides type-safe API call interfaces. For example:
 
 ```python
 from src.clients.generated._client.client import Client
 from src.clients.generated._client.api.steps import post_api_executions_execution_id_steps
 from src.clients.generated._client.models.http_create_step_request import HttpCreateStepRequest
 
-# 创建客户端
+# Create client
 client = Client(base_url="http://localhost:8080")
 
-# 创建步骤请求
+# Create step request
 request = HttpCreateStepRequest(
     step_name="analyzing",
     message="Analyzing code",
-    status="running"  # 可选
+    status="running"  # optional
 )
 
-# 调用 API
+# Call API
 response = post_api_executions_execution_id_steps.sync(
     execution_id="exec-123",
     client=client,
@@ -124,66 +124,66 @@ response = post_api_executions_execution_id_steps.sync(
 )
 ```
 
-### 更新 API 定义流程
+### API Definition Update Process
 
-1. 修改 `docs/swagger.yaml`
-2. 运行 `make regenerate` 重新生成客户端
-3. 更新 `HttpTaskManagerClient` 或其他使用生成客户端的代码（如需要）
-4. 运行测试验证更改
+1. Modify `docs/swagger.yaml`
+2. Run `make regenerate` to regenerate the client
+3. Update `HttpTaskManagerClient` or other code using the generated client (if needed)
+4. Run tests to verify changes
 
-### 层次说明（已更新）
+### Layer Description (Updated)
 
-1. **MCP Layer**: 基于 fastmcp 框架的工具定义层,负责接收 Agent 调用并返回结果
-2. **Client Layer**: 客户端抽象层,通过策略模式实现不同的后端通信方式
-3. **External**: 外部 Task Manager 服务
+1. **MCP Layer**: Tool definition layer based on the fastmcp framework, responsible for receiving Agent calls and returning results
+2. **Client Layer**: Client abstraction layer implementing different backend communication methods through the strategy pattern
+3. **External**: External Task Manager service
 
-## 组件和接口
+## Components and Interfaces
 
-### MCP 工具模块 (src/server/mcp_tools.py)
+### MCP Tools Module (src/server/mcp_tools.py)
 
-工具描述中需要告知 Agent 可从环境变量 `NOVA_EXECUTION_ID` 获取 execution_id。
+Tool descriptions need to inform the Agent that execution_id can be retrieved from the `NOVA_EXECUTION_ID` environment variable.
 
 ```python
 @mcp.tool()
 def update_execution_session(execution_id: str, session_id: str) -> Dict[str, Any]:
     """
-    更新 execution 的 session_id。在开始时调用此工具注册会话。
+    Update the session_id of an execution. Call this tool at the start to register the session.
     
     Args:
-        execution_id: 执行 ID（可从环境变量 NOVA_EXECUTION_ID 获取）
-        session_id: Agent 会话 ID（可通过 skill 工具获取）
+        execution_id: Execution ID (can be retrieved from NOVA_EXECUTION_ID environment variable)
+        session_id: Agent session ID (can be obtained through skill tool)
     """
     pass
 
 @mcp.tool()
 def create_step(execution_id: str, step_name: str, message: Optional[str] = None, status: Optional[str] = None) -> Dict[str, Any]:
     """
-    创建新步骤,返回 step_id。默认初始状态为 running。
+    Create a new step, returns step_id. Default initial status is running.
     
     Args:
-        execution_id: 执行 ID（可从环境变量 NOVA_EXECUTION_ID 获取）
-        step_name: 步骤名称
-        message: 可选的步骤描述
-        status: 可选的初始状态 - running/completed/failed/skipped（默认：running）
+        execution_id: Execution ID (can be retrieved from NOVA_EXECUTION_ID environment variable)
+        step_name: Step name
+        message: Optional step description
+        status: Optional initial status - running/completed/failed/skipped (default: running)
     """
     pass
 
 @mcp.tool()
 def update_step(execution_id: str, step_id: str, status: Optional[str] = None, message: Optional[str] = None) -> Dict[str, Any]:
     """
-    更新步骤状态和消息。
+    Update step status and message.
     
     Args:
-        execution_id: 执行 ID（可从环境变量 NOVA_EXECUTION_ID 获取）
-        step_id: 步骤 ID（从 create_step 返回）
-        status: 新状态 - running/completed/failed/skipped
-        message: 更新的消息
+        execution_id: Execution ID (can be retrieved from NOVA_EXECUTION_ID environment variable)
+        step_id: Step ID (returned from create_step)
+        status: New status - running/completed/failed/skipped
+        message: Updated message
     """
     pass
 
 @mcp.tool()
 def health_check() -> Dict[str, Any]:
-    """健康检查"""
+    """Health check"""
     pass
 ```
 
@@ -217,9 +217,9 @@ def create_task_manager_client() -> TaskManagerClientBase:
     return HttpTaskManagerClient()
 ```
 
-## 数据模型
+## Data Models
 
-### StepStatus 枚举
+### StepStatus Enumeration
 
 ```python
 class StepStatus(Enum):
@@ -229,156 +229,156 @@ class StepStatus(Enum):
     SKIPPED = "skipped"
 ```
 
-### 请求/响应数据结构
+### Request/Response Data Structures
 
 ```python
-# 执行更新请求
+# Execution update request
 @dataclass
 class ExecutionPatch:
     session_id: Optional[str] = None
     worktree_path: Optional[str] = None
 
-# 步骤创建请求
+# Step creation request
 @dataclass
 class StepCreate:
     step_name: str
     message: Optional[str] = None
     status: Optional[str] = None
 
-# 步骤更新请求
+# Step update request
 @dataclass
 class StepPatch:
     status: Optional[StepStatus] = None
     message: Optional[str] = None
 ```
 
-### API 响应格式
+### API Response Format
 
-所有 API 响应遵循统一格式：
+All API responses follow a unified format:
 
 ```python
-# 成功响应
+# Success response
 {
     "success": True,
-    "message": "操作描述",
-    "data": { ... }  # 具体数据
+    "message": "Operation description",
+    "data": { ... }  # Specific data
 }
 
-# 失败响应
+# Failure response
 {
     "success": False,
-    "error": "错误描述",
-    "error_code": "ERROR_CODE"  # 可选
+    "error": "Error description",
+    "error_code": "ERROR_CODE"  # Optional
 }
 ```
 
-### API 端点映射
+### API Endpoint Mapping
 
-| 操作 | HTTP 方法 | 端点 |
-|------|-----------|------|
-| 更新 Execution | PATCH | /api/executions/{execution-id} |
-| 创建 Step | POST | /api/executions/{execution-id}/steps |
-| 更新 Step | PATCH | /api/executions/{execution-id}/steps/{step-id} |
-| 健康检查 | GET | /api/health |
+| Operation | HTTP Method | Endpoint |
+|-----------|-------------|----------|
+| Update Execution | PATCH | /api/executions/{execution-id} |
+| Create Step | POST | /api/executions/{execution-id}/steps |
+| Update Step | PATCH | /api/executions/{execution-id}/steps/{step-id} |
+| Health Check | GET | /api/health |
 
 
 
-## 正确性属性
+## Correctness Properties
 
-*正确性属性是一种在系统所有有效执行中都应保持为真的特征或行为——本质上是关于系统应该做什么的形式化陈述。属性作为人类可读规范和机器可验证正确性保证之间的桥梁。*
+*Correctness properties are characteristics or behaviors that should remain true across all valid executions of a system—essentially formal statements about what the system should do. Properties serve as a bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
-### Property 1: 响应格式一致性
+### Property 1: Response Format Consistency
 
-*For any* MCP 工具调用,当操作成功时,响应 SHALL 包含 `success=True` 和 `data` 字段；当操作失败时,响应 SHALL 包含 `success=False` 和 `error` 字段。
+*For any* MCP tool call, when the operation succeeds, the response SHALL contain `success=True` and a `data` field; when the operation fails, the response SHALL contain `success=False` and an `error` field.
 
 **Validates: Requirements 1.2, 1.3, 2.2, 2.4, 3.6**
 
-### Property 2: 状态值验证
+### Property 2: Status Value Validation
 
-*For any* 传入 update_step 工具的 status 参数,如果该值不在 {running, completed, failed, skipped} 集合中,则工具 SHALL 返回包含 `success=False` 的错误响应。
+*For any* status parameter passed to the update_step tool, if the value is not in the set {running, completed, failed, skipped}, the tool SHALL return an error response containing `success=False`.
 
 **Validates: Requirements 3.2, 3.3**
 
-### Property 3: Mock 客户端状态一致性
+### Property 3: Mock Client State Consistency
 
-*For any* 通过 Mock_Client 创建的步骤,后续对该步骤的更新操作 SHALL 反映在步骤状态中；对于不存在的步骤 ID,更新操作 SHALL 返回错误。
+*For any* step created through Mock_Client, subsequent update operations on that step SHALL be reflected in the step state; for non-existent step IDs, update operations SHALL return an error.
 
 **Validates: Requirements 5.5**
 
-### Property 4: 工厂方法选择正确性
+### Property 4: Factory Method Selection Correctness
 
-*For any* USE_MOCK_CLIENT 环境变量值,当值为 "true"（不区分大小写）时,工厂方法 SHALL 返回 MockTaskManagerClient 实例；否则 SHALL 返回 HttpTaskManagerClient 实例。
+*For any* USE_MOCK_CLIENT environment variable value, when the value is "true" (case-insensitive), the factory method SHALL return a MockTaskManagerClient instance; otherwise SHALL return an HttpTaskManagerClient instance.
 
 **Validates: Requirements 5.1, 5.2, 5.3**
 
-### Property 5: HTTP 错误响应处理
+### Property 5: HTTP Error Response Handling
 
-*For any* HTTP 响应状态码 >= 400,HTTP_Client SHALL 返回包含 `success=False`、`error` 和 `status_code` 字段的响应。
+*For any* HTTP response status code >= 400, HTTP_Client SHALL return a response containing `success=False`, `error`, and `status_code` fields.
 
 **Validates: Requirements 6.7**
 
-### Property 6: 步骤创建初始状态
+### Property 6: Step Creation Initial Status
 
-*For any* 通过 create_step 创建的步骤,如果未提供 status 参数,其初始状态 SHALL 为 "running"；如果提供了 status 参数,SHALL 使用提供的状态值。
+*For any* step created through create_step, if no status parameter is provided, its initial status SHALL be "running"; if a status parameter is provided, SHALL use the provided status value.
 
 **Validates: Requirements 2.1, 2.4, 2.5**
 
-### Property 7: 参数传递完整性
+### Property 7: Parameter Passing Integrity
 
-*For any* 传入 MCP 工具的参数,客户端方法 SHALL 接收到相同的参数值（参数不丢失、不篡改）。
+*For any* parameters passed to MCP tools, client methods SHALL receive the same parameter values (parameters not lost, not tampered with).
 
 **Validates: Requirements 1.1, 2.3, 3.1, 3.5**
 
-## 错误处理
+## Error Handling
 
-### 错误类型
+### Error Types
 
-| 错误场景 | 错误响应 |
-|---------|---------|
-| 无效状态值（create_step） | `{"success": False, "error": "Invalid status '...'. Must be one of: running, completed, failed, skipped"}` |
-| 无效状态值（update_step） | `{"success": False, "error": "Invalid status '...'. Must be one of: running, completed, failed, skipped"}` |
-| 缺少必要参数 | `{"success": False, "error": "Provide at least status or message to update"}` |
-| HTTP 超时 | `{"success": False, "error": "Request timeout"}` |
-| 连接失败 | `{"success": False, "error": "Connection failed to {base_url}"}` |
-| API 错误 (4xx/5xx) | `{"success": False, "error": "...", "error_code": "...", "status_code": ...}` |
-| 步骤不存在 (Mock) | `{"success": False, "error": "Step {step_id} not found"}` |
+| Error Scenario | Error Response |
+|----------------|----------------|
+| Invalid status value (create_step) | `{"success": False, "error": "Invalid status '...'. Must be one of: running, completed, failed, skipped"}` |
+| Invalid status value (update_step) | `{"success": False, "error": "Invalid status '...'. Must be one of: running, completed, failed, skipped"}` |
+| Missing required parameter | `{"success": False, "error": "Provide at least status or message to update"}` |
+| HTTP timeout | `{"success": False, "error": "Request timeout"}` |
+| Connection failure | `{"success": False, "error": "Connection failed to {base_url}"}` |
+| API error (4xx/5xx) | `{"success": False, "error": "...", "error_code": "...", "status_code": ...}` |
+| Step not found (Mock) | `{"success": False, "error": "Step {step_id} not found"}` |
 
-### 异常处理策略
+### Exception Handling Strategy
 
-1. **MCP 工具层**: 捕获所有异常,转换为统一的错误响应格式
-2. **HTTP 客户端层**: 捕获 httpx 异常（TimeoutException、ConnectError）,转换为错误响应
-3. **Mock 客户端层**: 验证数据存在性,返回适当的错误响应
+1. **MCP Tool Layer**: Catch all exceptions, convert to unified error response format
+2. **HTTP Client Layer**: Catch httpx exceptions (TimeoutException, ConnectError), convert to error responses
+3. **Mock Client Layer**: Validate data existence, return appropriate error responses
 
-## 测试策略
+## Testing Strategy
 
-### 双重测试方法
+### Dual Testing Approach
 
-本项目采用单元测试和属性测试相结合的方式：
+This project combines unit testing and property testing:
 
-- **单元测试**: 验证具体示例、边界条件和错误情况
-- **属性测试**: 验证跨所有输入的通用属性
+- **Unit Tests**: Verify specific examples, boundary conditions, and error cases
+- **Property Tests**: Verify general properties across all inputs
 
-### 属性测试配置
+### Property Testing Configuration
 
-- **测试框架**: pytest + hypothesis
-- **最小迭代次数**: 每个属性测试 100 次
-- **标签格式**: `Feature: task-manager-mcp, Property {number}: {property_text}`
+- **Testing Framework**: pytest + hypothesis
+- **Minimum Iterations**: 100 iterations per property test
+- **Tag Format**: `Feature: task-manager-mcp, Property {number}: {property_text}`
 
-### 测试覆盖范围
+### Test Coverage
 
-| 测试类型 | 覆盖内容 |
-|---------|---------|
-| 单元测试 | MCP 工具参数验证、错误响应格式、数据模型结构 |
-| 属性测试 | 响应格式一致性、状态值验证、工厂方法选择、Mock 客户端状态 |
-| 集成测试 | HTTP 客户端与 Mock 服务器交互（可选） |
+| Test Type | Coverage |
+|-----------|----------|
+| Unit Tests | MCP tool parameter validation, error response format, data model structure |
+| Property Tests | Response format consistency, status value validation, factory method selection, Mock client state |
+| Integration Tests | HTTP client interaction with Mock server (optional) |
 
-### 测试文件结构
+### Test File Structure
 
 ```
 tests/
-├── test_mcp_tools.py          # MCP 工具单元测试
-├── test_clients.py            # 客户端单元测试
-├── test_models.py             # 数据模型测试
-├── test_properties.py         # 属性测试
-└── conftest.py                # pytest 配置和 fixtures
+├── test_mcp_tools.py          # MCP tool unit tests
+├── test_clients.py            # Client unit tests
+├── test_models.py             # Data model tests
+├── test_properties.py         # Property tests
+└── conftest.py                # pytest configuration and fixtures
 ```

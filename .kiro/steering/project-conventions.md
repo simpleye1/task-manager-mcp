@@ -2,74 +2,74 @@
 inclusion: always
 ---
 
-# Task Manager MCP 项目规范
+# Task Manager MCP Project Conventions
 
-## 代码生成
+## Code Generation
 
-**重要：** 本项目的 API 客户端代码是自动生成的，不要手动修改生成的文件。
+**Important:** The API client code in this project is auto-generated. Do not manually modify generated files.
 
-### 客户端代码生成
+### Client Code Generation
 
-- **生成工具**: `openapi-python-client`
-- **源文件**: `docs/swagger.yaml`
-- **生成目录**: `src/clients/generated/`
-- **生成命令**: 
-  - `make regenerate` - 清理并重新生成客户端
-  - `make generate` - 仅生成客户端
-  - `make clean` - 清理生成的代码
+- **Generation Tool**: `openapi-python-client`
+- **Source File**: `docs/swagger.yaml`
+- **Output Directory**: `src/clients/generated/`
+- **Generation Commands**: 
+  - `make regenerate` - Clean and regenerate client
+  - `make generate` - Generate client only
+  - `make clean` - Clean generated code
 
-### 工作流程
+### Workflow
 
-1. 修改 `docs/swagger.yaml` 中的 API 定义
-2. 运行 `make regenerate` 重新生成客户端代码
-3. 更新手写的包装器代码（如 `src/clients/http_client.py`）以使用新的 API
-4. 运行测试验证更改
+1. Modify API definition in `docs/swagger.yaml`
+2. Run `make regenerate` to regenerate client code
+3. Update hand-written wrapper code (e.g., `src/clients/http_client.py`) to use new API
+4. Run tests to verify changes
 
-**注意**: 生成的代码位于 `src/clients/generated/_client/` 目录下，包含：
-- `api/` - API 端点函数
-- `models/` - 数据模型类
-- `client.py` - 客户端基类
+**Note**: Generated code is located in `src/clients/generated/_client/` directory, including:
+- `api/` - API endpoint functions
+- `models/` - Data model classes
+- `client.py` - Client base class
 
-## Git Commit 规范
+## Git Commit Conventions
 
 ### Pre-commit Hook
 
-项目配置了 pre-commit hook，会在每次 commit 前自动运行测试：
+The project has a pre-commit hook configured that automatically runs tests before each commit:
 
 ```bash
-# Hook 位置
+# Hook location
 .git/hooks/pre-commit
 
-# 自动执行
+# Automatically executes
 make test
 ```
 
-如果测试失败，commit 会被阻止。修复测试后再次尝试提交。
+If tests fail, the commit will be blocked. Fix the tests and try committing again.
 
-**跳过 hook（不推荐）**:
+**Skip hook (not recommended)**:
 ```bash
 git commit --no-verify -m "your message"
 ```
 
-### Commit Message 格式
+### Commit Message Format
 
-使用简洁的一句话格式，遵循 Conventional Commits 规范：
+Use concise one-line format following Conventional Commits specification:
 
 ```
 <type>: <description>
 ```
 
-### Type 类型
+### Type Categories
 
-- `feat`: 新功能
-- `fix`: 修复 bug
-- `docs`: 文档更新
-- `style`: 代码格式调整（不影响功能）
-- `refactor`: 重构代码
-- `test`: 添加或修改测试
-- `chore`: 构建工具、依赖更新等
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation update
+- `style`: Code formatting (no functional changes)
+- `refactor`: Code refactoring
+- `test`: Add or modify tests
+- `chore`: Build tools, dependency updates, etc.
 
-### 示例
+### Examples
 
 ```bash
 feat: add status parameter to create_step API
@@ -80,32 +80,32 @@ refactor: simplify error handling in MCP tools
 test: add property tests for step creation
 ```
 
-### 规则
+### Rules
 
-- 使用英文描述
-- 首字母小写
-- 不要以句号结尾
-- 描述要清晰简洁，说明做了什么改动
-- 一个 commit 只做一件事
+- Use English descriptions
+- Start with lowercase
+- Do not end with period
+- Description should be clear and concise, explaining what was changed
+- One commit should do one thing
 
-## 项目结构
+## Project Structure
 
 ```
 .
 ├── docs/
-│   └── swagger.yaml          # API 定义（源文件）
+│   └── swagger.yaml          # API definition (source file)
 ├── src/
 │   ├── clients/
-│   │   ├── generated/        # 自动生成的客户端（不要手动修改）
-│   │   ├── base_client.py    # 客户端抽象基类
-│   │   ├── http_client.py    # HTTP 客户端实现
-│   │   ├── mock_client.py    # Mock 客户端实现
-│   │   └── client_factory.py # 客户端工厂
-│   ├── models/               # 数据模型
-│   └── server/               # MCP 服务器
-├── tests/                    # 测试文件
-├── Makefile                  # 构建和生成命令
+│   │   ├── generated/        # Auto-generated client (do not modify manually)
+│   │   ├── base_client.py    # Client abstract base class
+│   │   ├── http_client.py    # HTTP client implementation
+│   │   ├── mock_client.py    # Mock client implementation
+│   │   └── client_factory.py # Client factory
+│   ├── models/               # Data models
+│   └── server/               # MCP server
+├── tests/                    # Test files
+├── Makefile                  # Build and generation commands
 └── .kiro/
-    ├── specs/                # 功能规格文档
-    └── steering/             # 项目规范和指南
+    ├── specs/                # Feature specification documents
+    └── steering/             # Project conventions and guidelines
 ```

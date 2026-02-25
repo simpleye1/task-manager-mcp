@@ -1,122 +1,122 @@
-# 实现计划: Task Manager MCP
+# Implementation Plan: Task Manager MCP
 
-## 概述
+## Overview
 
-本任务列表基于已实现的代码逆向生成,主要用于记录实现状态和补充测试覆盖。由于核心功能已实现,任务重点在于验证现有实现和补充属性测试。
+This task list is reverse-engineered from the implemented code, primarily used to document implementation status and supplement test coverage. Since core functionality is already implemented, tasks focus on verifying existing implementation and supplementing property tests.
 
-**重要提示：** 项目使用 `openapi-python-client` 从 `docs/swagger.yaml` 自动生成 API 客户端代码。当修改 API 定义后,运行 `make regenerate` 重新生成客户端代码到 `src/clients/generated/` 目录。
+**Important Note:** The project uses `openapi-python-client` to automatically generate API client code from `docs/swagger.yaml`. After modifying the API definition, run `make regenerate` to regenerate client code to the `src/clients/generated/` directory.
 
-## 任务
+## Tasks
 
-- [x] 1. 数据模型实现
-  - [x] 1.1 实现 StepStatus 枚举
-    - 定义 running、completed、failed、skipped 四种状态
+- [x] 1. Data Model Implementation
+  - [x] 1.1 Implement StepStatus enumeration
+    - Define four states: running, completed, failed, skipped
     - _Requirements: 7.1_
   
-  - [x] 1.2 实现数据类
-    - 实现 ExecutionPatch、StepCreate、StepPatch 数据类
+  - [x] 1.2 Implement data classes
+    - Implement ExecutionPatch, StepCreate, StepPatch data classes
     - _Requirements: 7.2, 7.3, 7.4_
 
-- [x] 2. 客户端抽象层实现
-  - [x] 2.1 实现 TaskManagerClientBase 抽象基类
-    - 定义 patch_execution、create_step、patch_step、health_check 抽象方法
+- [x] 2. Client Abstraction Layer Implementation
+  - [x] 2.1 Implement TaskManagerClientBase abstract base class
+    - Define abstract methods: patch_execution, create_step, patch_step, health_check
     - _Requirements: 5.1_
   
-  - [x] 2.2 实现 HttpTaskManagerClient
-    - 实现 HTTP 请求发送和响应处理
-    - 实现环境变量配置读取
-    - 注意：项目使用 `make regenerate` 从 swagger.yaml 生成类型化客户端到 src/clients/generated/
+  - [x] 2.2 Implement HttpTaskManagerClient
+    - Implement HTTP request sending and response handling
+    - Implement environment variable configuration reading
+    - Note: Project uses `make regenerate` to generate typed client from swagger.yaml to src/clients/generated/
     - _Requirements: 5.4, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9_
   
-  - [x] 2.3 实现 MockTaskManagerClient
-    - 实现内存数据存储
-    - 实现模拟 API 响应
+  - [x] 2.3 Implement MockTaskManagerClient
+    - Implement in-memory data storage
+    - Implement mock API responses
     - _Requirements: 5.5_
   
-  - [x] 2.4 实现 create_task_manager_client 工厂方法
-    - 根据 USE_MOCK_CLIENT 环境变量选择客户端
+  - [x] 2.4 Implement create_task_manager_client factory method
+    - Select client based on USE_MOCK_CLIENT environment variable
     - _Requirements: 5.1, 5.2, 5.3_
 
-- [x] 3. MCP 工具实现
-  - [x] 3.1 实现 update_execution_session 工具
-    - 接收 execution_id 和 session_id 参数
-    - 调用客户端 patch_execution 方法
+- [x] 3. MCP Tools Implementation
+  - [x] 3.1 Implement update_execution_session tool
+    - Accept execution_id and session_id parameters
+    - Call client patch_execution method
     - _Requirements: 1.1, 1.2, 1.3, 1.4_
   
-  - [x] 3.2 实现 create_step 工具
-    - 接收 execution_id、step_name 和可选 message、status 参数
-    - 实现 status 值验证（仅接受 running/completed/failed/skipped）
-    - 调用客户端 create_step 方法
+  - [x] 3.2 Implement create_step tool
+    - Accept execution_id, step_name and optional message, status parameters
+    - Implement status value validation (only accept running/completed/failed/skipped)
+    - Call client create_step method
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8_
   
-  - [x] 3.3 实现 update_step 工具
-    - 接收 execution_id、step_id、可选 status 和 message 参数
-    - 实现状态值验证
-    - 调用客户端 patch_step 方法
+  - [x] 3.3 Implement update_step tool
+    - Accept execution_id, step_id, optional status and message parameters
+    - Implement status value validation
+    - Call client patch_step method
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
   
-  - [x] 3.4 实现 health_check 工具
-    - 调用客户端 health_check 方法
+  - [x] 3.4 Implement health_check tool
+    - Call client health_check method
     - _Requirements: 4.1, 4.2, 4.3_
   
-  - [x] 3.5 更新 MCP 工具描述
-    - 在 execution_id 参数描述中添加 "可从环境变量 NOVA_EXECUTION_ID 获取" 提示
-    - 在 session_id 参数描述中添加 "可通过 skill 工具获取" 提示
-    - 更新 update_execution_session、create_step、update_step 三个工具
+  - [x] 3.5 Update MCP tool descriptions
+    - Add "can be retrieved from NOVA_EXECUTION_ID environment variable" hint in execution_id parameter description
+    - Add "can be obtained through skill tool" hint in session_id parameter description
+    - Update three tools: update_execution_session, create_step, update_step
     - _Requirements: 1.5, 1.6, 2.5, 3.7_
 
-- [ ] 4. 单元测试
-  - [ ]* 4.1 编写 MCP 工具单元测试
-    - 测试参数验证逻辑
-    - 测试错误响应格式
+- [ ] 4. Unit Tests
+  - [ ]* 4.1 Write MCP tool unit tests
+    - Test parameter validation logic
+    - Test error response format
     - _Requirements: 1.4, 3.2, 3.3, 3.4_
   
-  - [ ]* 4.2 编写客户端单元测试
-    - 测试工厂方法选择逻辑
-    - 测试 Mock 客户端数据管理
+  - [ ]* 4.2 Write client unit tests
+    - Test factory method selection logic
+    - Test Mock client data management
     - _Requirements: 5.1, 5.2, 5.3, 5.5_
   
-  - [ ]* 4.3 编写数据模型单元测试
-    - 测试枚举值
-    - 测试数据类字段
+  - [ ]* 4.3 Write data model unit tests
+    - Test enumeration values
+    - Test data class fields
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
-- [ ] 5. 属性测试
-  - [ ]* 5.1 编写响应格式一致性属性测试
-    - **Property 1: 响应格式一致性**
+- [ ] 5. Property Tests
+  - [ ]* 5.1 Write response format consistency property test
+    - **Property 1: Response Format Consistency**
     - **Validates: Requirements 1.2, 1.3, 2.2, 2.4, 3.6**
   
-  - [ ]* 5.2 编写状态值验证属性测试
-    - **Property 2: 状态值验证**
+  - [ ]* 5.2 Write status value validation property test
+    - **Property 2: Status Value Validation**
     - **Validates: Requirements 3.2, 3.3**
   
-  - [ ]* 5.3 编写 Mock 客户端状态一致性属性测试
-    - **Property 3: Mock 客户端状态一致性**
+  - [ ]* 5.3 Write Mock client state consistency property test
+    - **Property 3: Mock Client State Consistency**
     - **Validates: Requirements 5.5**
   
-  - [ ]* 5.4 编写工厂方法选择正确性属性测试
-    - **Property 4: 工厂方法选择正确性**
+  - [ ]* 5.4 Write factory method selection correctness property test
+    - **Property 4: Factory Method Selection Correctness**
     - **Validates: Requirements 5.1, 5.2, 5.3**
   
-  - [ ]* 5.5 编写 HTTP 错误响应处理属性测试
-    - **Property 5: HTTP 错误响应处理**
+  - [ ]* 5.5 Write HTTP error response handling property test
+    - **Property 5: HTTP Error Response Handling**
     - **Validates: Requirements 6.7**
   
-  - [ ]* 5.6 编写步骤创建初始状态属性测试
-    - **Property 6: 步骤创建初始状态**
+  - [ ]* 5.6 Write step creation initial status property test
+    - **Property 6: Step Creation Initial Status**
     - **Validates: Requirements 2.1**
   
-  - [ ]* 5.7 编写参数传递完整性属性测试
-    - **Property 7: 参数传递完整性**
+  - [ ]* 5.7 Write parameter passing integrity property test
+    - **Property 7: Parameter Passing Integrity**
     - **Validates: Requirements 1.1, 2.3, 3.1, 3.5**
 
-- [ ] 6. 检查点 - 确保所有测试通过
-  - 运行所有测试,如有问题请咨询用户
+- [ ] 6. Checkpoint - Ensure all tests pass
+  - Run all tests, consult user if there are issues
 
-## 备注
+## Notes
 
-- 标记为 `[x]` 的任务表示已在现有代码中实现
-- 标记为 `*` 的任务为可选任务,可跳过以加快 MVP 进度
-- 每个任务都引用了具体的需求以便追溯
-- 属性测试验证通用正确性属性
-- 单元测试验证具体示例和边界条件
+- Tasks marked with `[x]` indicate they are already implemented in existing code
+- Tasks marked with `*` are optional tasks that can be skipped to accelerate MVP progress
+- Each task references specific requirements for traceability
+- Property tests verify general correctness properties
+- Unit tests verify specific examples and boundary conditions

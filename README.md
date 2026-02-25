@@ -1,18 +1,18 @@
 # Task Manager MCP
 
-Nova Agent 进度汇报 MCP 服务器。
+Nova Agent progress reporting MCP server.
 
-## 安装
+## Installation
 
-### 方式 1: Docker 安装（推荐）
+### Method 1: Docker Installation (Recommended)
 
-#### 1. 构建 Docker 镜像
+#### 1. Build Docker Image
 
 ```bash
 ./build-docker.sh
 ```
 
-#### 2. 添加到 Claude Desktop
+#### 2. Add to Claude Desktop
 
 **macOS/Windows:**
 
@@ -46,7 +46,7 @@ claude mcp add task-manager -s user \
     task-manager-mcp:latest
 ```
 
-**Mock 模式（测试用）:**
+**Mock Mode (for testing):**
 
 ```bash
 claude mcp add task-manager-mock -s user \
@@ -56,17 +56,17 @@ claude mcp add task-manager-mock -s user \
     task-manager-mcp:latest
 ```
 
-### 方式 2: 本地 Python 安装
+### Method 2: Local Python Installation
 
-#### 1. 安装依赖
+#### 1. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-#### 2. 手动配置 MCP
+#### 2. Manual MCP Configuration
 
-编辑 Claude Desktop 的 MCP 配置文件（参考 `mcp-config-example.json`）：
+Edit Claude Desktop's MCP configuration file (refer to `mcp-config-example.json`):
 
 ```json
 {
@@ -85,85 +85,85 @@ pip install -r requirements.txt
 }
 ```
 
-### 卸载
+### Uninstallation
 
 ```bash
-# 删除 MCP 服务器
+# Remove MCP server
 claude mcp remove task-manager
 
-# 或删除 mock 版本
+# Or remove mock version
 claude mcp remove task-manager-mock
 ```
 
 ## MCP Tools
 
-| Tool | 用途 |
-|------|------|
-| `update_execution_session` | 更新 execution 的 session_id |
-| `create_step` | 创建步骤，返回 step_id |
-| `update_step` | 更新步骤状态/消息 |
-| `health_check` | 健康检查 |
+| Tool | Purpose |
+|------|---------|
+| `update_execution_session` | Update execution's session_id |
+| `create_step` | Create a step and return step_id |
+| `update_step` | Update step status/message |
+| `health_check` | Health check |
 
-## 使用示例
+## Usage Example
 
 ```python
-# 1. 注册 session
+# 1. Register session
 update_execution_session(execution_id="exec-123", session_id="nova-001")
 
-# 2. 创建步骤
+# 2. Create step
 result = create_step(execution_id="exec-123", step_name="analyzing")
 step_id = result["step_id"]
 
-# 3. 完成步骤
+# 3. Complete step
 update_step(execution_id="exec-123", step_id=step_id, status="completed")
 ```
 
 ## Step Status
 
-- `running` - 执行中
-- `completed` - 完成
-- `failed` - 失败
-- `skipped` - 跳过
+- `running` - In progress
+- `completed` - Completed
+- `failed` - Failed
+- `skipped` - Skipped
 
-## 配置
+## Configuration
 
-### 环境变量
+### Environment Variables
 
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `TASK_MANAGER_HOST` | Task Manager 服务地址 | `localhost` |
-| `TASK_MANAGER_PORT` | Task Manager 服务端口 | `8080` |
-| `TASK_MANAGER_TIMEOUT` | 请求超时时间（秒） | `30` |
-| `USE_MOCK_CLIENT` | 是否使用 Mock 客户端 | `false` |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TASK_MANAGER_HOST` | Task Manager service address | `localhost` |
+| `TASK_MANAGER_PORT` | Task Manager service port | `8080` |
+| `TASK_MANAGER_TIMEOUT` | Request timeout (seconds) | `30` |
+| `USE_MOCK_CLIENT` | Whether to use Mock client | `false` |
 
-### Docker 网络说明
+### Docker Network Notes
 
-- **macOS/Windows**: 使用 `host.docker.internal` 访问宿主机服务
-- **Linux**: 使用 `--network=host` 和 `localhost` 访问宿主机服务
+- **macOS/Windows**: Use `host.docker.internal` to access host services
+- **Linux**: Use `--network=host` and `localhost` to access host services
 
-## 开发
+## Development
 
-### 本地运行
+### Run Locally
 
 ```bash
 pip install -r requirements.txt
 python task_manager_mcp.py
 ```
 
-### 运行测试
+### Run Tests
 
 ```bash
 make test
-# 或
+# or
 python tests/simple_test.py
 python tests/test_generated_client.py
 ```
 
-## 错误处理
+## Error Handling
 
-当后端 API 不可用时，MCP 会返回清晰的错误信息：
+When backend API is unavailable, MCP returns clear error messages:
 
-**404 错误（API 未实现）:**
+**404 Error (API not implemented):**
 ```json
 {
   "success": false,
@@ -173,7 +173,7 @@ python tests/test_generated_client.py
 }
 ```
 
-**连接失败:**
+**Connection Failed:**
 ```json
 {
   "success": false,
@@ -181,67 +181,3 @@ python tests/test_generated_client.py
   "hint": "Please verify that the Task Manager service is running and the host/port are correct."
 }
 ```
-
-## 配置
-
-### 环境变量
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `TASK_MANAGER_HOST` | Task Manager 服务地址 | `localhost` |
-| `TASK_MANAGER_PORT` | Task Manager 服务端口 | `8080` |
-| `TASK_MANAGER_TIMEOUT` | 请求超时时间（秒） | `30` |
-| `USE_MOCK_CLIENT` | 是否使用 Mock 客户端 | `false` |
-
-### Docker 网络说明
-
-- **macOS/Windows**: 使用 `host.docker.internal` 访问宿主机服务
-- **Linux**: 使用 `--network=host` 和 `localhost` 访问宿主机服务
-
-## 开发
-
-### 本地运行
-
-```bash
-pip install -r requirements.txt
-python task_manager_mcp.py
-```
-
-### 运行测试
-
-```bash
-make test
-# 或
-python tests/simple_test.py
-python tests/test_generated_client.py
-```
-
-## 错误处理
-
-当后端 API 不可用时，MCP 会返回清晰的错误信息：
-
-**404 错误（API 未实现）:**
-```json
-{
-  "success": false,
-  "error": "API endpoint not found: PATCH /api/executions/{id}/steps/{step_id}. The backend service may not have implemented this API yet.",
-  "status_code": 404,
-  "hint": "Please check if the Task Manager backend service has this endpoint implemented."
-}
-```
-
-**连接失败:**
-```json
-{
-  "success": false,
-  "error": "Cannot connect to Task Manager service at http://localhost:8080",
-  "hint": "Please verify that the Task Manager service is running and the host/port are correct."
-}
-```
-
-## Step Status
-
-- `running` - 执行中
-- `completed` - 完成
-- `failed` - 失败
-- `skipped` - 跳过

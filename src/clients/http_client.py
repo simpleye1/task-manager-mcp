@@ -35,7 +35,7 @@ class HttpTaskManagerClient(TaskManagerClientBase):
                 )
                 
                 if response.status_code >= 400:
-                    # 特殊处理常见的 HTTP 错误状态码
+                    # Handle common HTTP error status codes
                     if response.status_code == 404:
                         return {
                             "success": False,
@@ -51,7 +51,7 @@ class HttpTaskManagerClient(TaskManagerClientBase):
                             "hint": "Please check the Task Manager service logs for details."
                         }
                     
-                    # 尝试解析 JSON 错误响应
+                    # Try to parse JSON error response
                     try:
                         error_data = response.json()
                         return {
@@ -61,7 +61,7 @@ class HttpTaskManagerClient(TaskManagerClientBase):
                             "status_code": response.status_code
                         }
                     except Exception:
-                        # 如果无法解析 JSON，返回通用错误信息
+                        # If unable to parse JSON, return generic error message
                         return {
                             "success": False,
                             "error": f"HTTP {response.status_code} error: {response.text[:200]}",
